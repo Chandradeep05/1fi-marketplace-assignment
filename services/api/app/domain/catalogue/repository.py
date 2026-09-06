@@ -23,20 +23,23 @@ class CatalogueRepository:
         limit: int = 20,
         offset: int = 0,
     ) -> Tuple[List[Product], int]:
-        conditions = [Product.is_available.is_(True)]
+        conditions = [
+            Product.is_available.is_(True),
+            Product.is_test_fixture.is_(False),
+        ]
 
         if category_id:
             conditions.append(Product.category_id == category_id)
 
         if search and search.strip():
             raw_search = search.strip()
-            # Escape literal wildcards to avoid uncontrolled pattern matching
+            # Escape literal wildcards in order: \ first, then %, then _
             escaped_search = (
                 raw_search.replace("\\", "\\\\")
                 .replace("%", "\\%")
                 .replace("_", "\\_")
             )
-            conditions.append(Product.name.ilike(f"%{escaped_search}%"))
+            conditions.append(Product.name.ilike(f"%{escaped_search}%", escape="\\"))
 
         # Count total
         count_stmt = select(func.count(Product.id)).where(and_(*conditions))

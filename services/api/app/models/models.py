@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    JSON,
     String,
     Text,
 )
@@ -17,6 +18,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+
+JSON_TYPE = JSON().with_variant(JSONB, "postgresql")
 
 
 class Category(Base):
@@ -51,6 +54,7 @@ class Product(Base):
     base_price_paisa = Column(Integer, nullable=False)
     mrp_paisa = Column(Integer, nullable=True)
     is_available = Column(Boolean, default=True, nullable=False)
+    is_test_fixture = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     brand = relationship("Brand", back_populates="products")
@@ -83,7 +87,7 @@ class ProductVariant(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     product_id = Column(String, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
-    attributes = Column(JSONB, nullable=False)  # {"color": "Black", "storage": "256GB"}
+    attributes = Column(JSON_TYPE, nullable=False)  # {"color": "Black", "storage": "256GB"}
     price_paisa = Column(Integer, nullable=False)
     available = Column(Boolean, default=True, nullable=False)
     image_url = Column(String, nullable=True)
@@ -104,12 +108,19 @@ class Offer(Base):
     product_id = Column(String, ForeignKey("products.id"), nullable=True)
     category_id = Column(String, ForeignKey("categories.id"), nullable=True)
     cashback_paisa = Column(Integer, default=0, nullable=False)
-    discount_pct_bps = Column(Integer, default=0, nullable=False)
     valid_from = Column(DateTime(timezone=True), nullable=False)
     valid_to = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
         CheckConstraint("cashback_paisa >= 0", name="chk_offer_cashback_non_negative"),
+        CheckConstraint(
+            """
+            (product_id IS NOT NULL AND category_id IS NULL) OR
+            (product_id IS NULL AND category_id IS NOT NULL) OR
+            (product_id IS NULL AND category_id IS NULL)
+            """,
+            name="chk_offer_scope",
+        ),
     )
 
 
@@ -142,8 +153,16 @@ class EmiPlanRule(Base):
         CheckConstraint("interest_rate_bps >= 0", name="chk_emi_rule_interest_non_negative"),
         CheckConstraint("min_amount_paisa >= 0", name="chk_emi_rule_min_amount_non_negative"),
         CheckConstraint("max_amount_paisa IS NULL OR max_amount_paisa >= min_amount_paisa", name="chk_emi_rule_max_gte_min"),
+        CheckConstraint(
+            "(interest_rate_bps = 0 AND is_no_cost = TRUE) OR (interest_rate_bps > 0 AND is_no_cost = FALSE)",
+            name="chk_emi_rule_no_cost_consistency",
+        ),
         Index("idx_emi_rules_scope", "product_id", "brand_id", "category_id"),
     )
+
+    @property
+    def is_no_cost_derived(self) -> bool:
+        return self.interest_rate_bps == 0
 
 
 class Quote(Base):
@@ -154,7 +173,7 @@ class Quote(Base):
     variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=False)
     price_paisa = Column(Integer, nullable=False)
     cashback_paisa = Column(Integer, default=0, nullable=False)
-    plans_json = Column(JSONB, nullable=False)
+    plans_json = Column(JSON_TYPE, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
 
@@ -174,7 +193,7 @@ class CheckoutIntent(Base):
     status = Column(String, default="received", nullable=False)
     idempotency_key = Column(String, unique=True, nullable=False)
     request_hash = Column(String, nullable=False)
-    response_json = Column(JSONB, nullable=False)
+    response_json = Column(JSON_TYPE, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (

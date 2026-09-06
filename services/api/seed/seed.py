@@ -39,6 +39,7 @@ PRODUCTS = [
         "base_price_paisa": 13490000,  # ₹1,34,900
         "mrp_paisa": 13990000,         # ₹1,39,900
         "is_available": True,
+        "is_test_fixture": False,
     },
     {
         "id": "galaxy-s25-ultra",
@@ -49,6 +50,7 @@ PRODUCTS = [
         "base_price_paisa": 12999900,  # ₹1,29,999
         "mrp_paisa": 13499900,         # ₹1,34,999
         "is_available": True,
+        "is_test_fixture": False,
     },
     {
         "id": "macbook-pro-m4",
@@ -59,6 +61,7 @@ PRODUCTS = [
         "base_price_paisa": 16990000,  # ₹1,69,900
         "mrp_paisa": 17990000,         # ₹1,79,900
         "is_available": True,
+        "is_test_fixture": False,
     },
     {
         "id": "sony-wh1000xm5",
@@ -69,6 +72,7 @@ PRODUCTS = [
         "base_price_paisa": 2999000,   # ₹29,990
         "mrp_paisa": 3499000,          # ₹34,990
         "is_available": True,
+        "is_test_fixture": False,
     },
     {
         "id": "test-cable-7m",
@@ -77,8 +81,9 @@ PRODUCTS = [
         "category_id": "accessories",
         "description": "Reference cable for testing exact remainder absorption math (₹9,991 over 7 months).",
         "base_price_paisa": 999100,    # ₹9,991
-        "mrp_paisa": 129900,
+        "mrp_paisa": 1299100,          # ₹12,991 (satisfies mrp_paisa >= base_price_paisa)
         "is_available": True,
+        "is_test_fixture": True,
     },
 ]
 
@@ -177,7 +182,6 @@ OFFERS = [
         "product_id": "iphone-17-pro",
         "category_id": None,
         "cashback_paisa": 800000,  # ₹8,000 instant financing cashback (ADR-003)
-        "discount_pct_bps": 0,
         "valid_from": datetime.now(timezone.utc) - timedelta(days=1),
         "valid_to": datetime.now(timezone.utc) + timedelta(days=365),
     },
@@ -186,7 +190,6 @@ OFFERS = [
         "product_id": "galaxy-s25-ultra",
         "category_id": None,
         "cashback_paisa": 500000,  # ₹5,000 instant financing cashback
-        "discount_pct_bps": 0,
         "valid_from": datetime.now(timezone.utc) - timedelta(days=1),
         "valid_to": datetime.now(timezone.utc) + timedelta(days=365),
     },

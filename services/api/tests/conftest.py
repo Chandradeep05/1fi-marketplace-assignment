@@ -162,3 +162,12 @@ async def test_session_factory(test_engine):
 async def db_session(test_session_factory):
     async with test_session_factory() as session:
         yield session
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def reset_redis_client():
+    from app.core.redis import close_redis
+    await close_redis()
+    yield
+    await close_redis()
+

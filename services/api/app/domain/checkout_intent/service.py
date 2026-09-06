@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import logging
@@ -217,17 +218,24 @@ class CheckoutIntentService:
                 )
 
             # Phase C: Fresh session operation to recover winning concurrent intent
-            async with self.session_factory() as recovery_session:
-                recovery_repo = CheckoutIntentRepository(recovery_session)
-                concurrent_intent = await recovery_repo.get_by_idempotency_key(idempotency_key)
-                if not concurrent_intent or concurrent_intent.request_hash != request_hash:
-                    raise APIException(
-                        ErrorCode.IDEMPOTENCY_CONFLICT,
-                        "Idempotency key conflict under concurrent submission",
-                        status_code=409,
-                    )
-                final_response = concurrent_intent.response_json
-                status_code = 200
+            # The winning transaction may still be in-flight; retry briefly with backoff
+            concurrent_intent = None
+            for attempt in range(10):
+                async with self.session_factory() as recovery_session:
+                    recovery_repo = CheckoutIntentRepository(recovery_session)
+                    concurrent_intent = await recovery_repo.get_by_idempotency_key(idempotency_key)
+                    if concurrent_intent:
+                        break
+                await asyncio.sleep(0.05 * (attempt + 1))
+
+            if not concurrent_intent or concurrent_intent.request_hash != request_hash:
+                raise APIException(
+                    ErrorCode.IDEMPOTENCY_CONFLICT,
+                    "Idempotency key conflict under concurrent submission",
+                    status_code=409,
+                )
+            final_response = concurrent_intent.response_json
+            status_code = 200
 
         # Warm Redis cache
         try:

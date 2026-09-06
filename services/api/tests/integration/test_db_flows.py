@@ -561,24 +561,7 @@ async def test_quote_and_checkout_continue_when_redis_unavailable(db_session, te
 
 @pytest.mark.asyncio
 async def test_non_idempotency_integrity_error_raises_500(db_session, test_session_factory, monkeypatch):
-    cat = Category(id="cat_nie", name="NIE Cat", icon="cube", sort_order=0)
-    brand = Brand(id="brand_nie", name="NIE Brand")
-    prod = Product(
-        id="prod_nie",
-        name="NIE Prod",
-        brand_id="brand_nie",
-        category_id="cat_nie",
-        base_price_paisa=2000000,
-        is_available=True,
-        is_test_fixture=False,
-    )
-    var = ProductVariant(
-        id=uuid.uuid4(),
-        product_id="prod_nie",
-        attributes={"Color": "Blue"},
-        price_paisa=2000000,
-        available=True,
-    )
+    prod, var = await seed_test_catalog(db_session)
     now = datetime.now(timezone.utc)
     quote = Quote(
         id="qt_nie_test",
@@ -586,11 +569,11 @@ async def test_non_idempotency_integrity_error_raises_500(db_session, test_sessi
         variant_id=var.id,
         price_paisa=var.price_paisa,
         cashback_paisa=0,
-        plans_json=[{"plan_id": "12m", "monthly_emi_paisa": 166666}],
+        plans_json=[{"plan_id": "36m", "monthly_emi_paisa": 352500}],
         created_at=now,
         expires_at=now + timedelta(minutes=10),
     )
-    db_session.add_all([cat, brand, prod, var, quote])
+    db_session.add(quote)
     await db_session.commit()
 
     from sqlalchemy.exc import IntegrityError
@@ -603,7 +586,7 @@ async def test_non_idempotency_integrity_error_raises_500(db_session, test_sessi
     with pytest.raises(APIException) as exc_info:
         await service.create_intent(
             quote_id="qt_nie_test",
-            plan_id="12m",
+            plan_id="36m",
             idempotency_key="key_nie_unique",
         )
     assert exc_info.value.code == ErrorCode.INTERNAL_ERROR
@@ -612,24 +595,7 @@ async def test_non_idempotency_integrity_error_raises_500(db_session, test_sessi
 
 @pytest.mark.asyncio
 async def test_high_concurrency_same_key_produces_single_intent(db_session, test_session_factory):
-    cat = Category(id="cat_hc", name="High Concurrency Cat", icon="cube", sort_order=0)
-    brand = Brand(id="brand_hc", name="High Concurrency Brand")
-    prod = Product(
-        id="prod_hc",
-        name="High Concurrency Prod",
-        brand_id="brand_hc",
-        category_id="cat_hc",
-        base_price_paisa=3000000,
-        is_available=True,
-        is_test_fixture=False,
-    )
-    var = ProductVariant(
-        id=uuid.uuid4(),
-        product_id="prod_hc",
-        attributes={"Color": "Black"},
-        price_paisa=3000000,
-        available=True,
-    )
+    prod, var = await seed_test_catalog(db_session)
     now = datetime.now(timezone.utc)
     quote = Quote(
         id="qt_hc_test",
@@ -637,11 +603,11 @@ async def test_high_concurrency_same_key_produces_single_intent(db_session, test
         variant_id=var.id,
         price_paisa=var.price_paisa,
         cashback_paisa=0,
-        plans_json=[{"plan_id": "12m", "monthly_emi_paisa": 250000}],
+        plans_json=[{"plan_id": "36m", "monthly_emi_paisa": 352500}],
         created_at=now,
         expires_at=now + timedelta(minutes=10),
     )
-    db_session.add_all([cat, brand, prod, var, quote])
+    db_session.add(quote)
     await db_session.commit()
 
     async def execute_checkout():
@@ -649,7 +615,7 @@ async def test_high_concurrency_same_key_produces_single_intent(db_session, test
             service = CheckoutIntentService(sess, session_factory=test_session_factory)
             return await service.create_intent(
                 quote_id="qt_hc_test",
-                plan_id="12m",
+                plan_id="36m",
                 idempotency_key="burst_key_100",
             )
 
@@ -670,24 +636,7 @@ async def test_high_concurrency_same_key_produces_single_intent(db_session, test
 
 @pytest.mark.asyncio
 async def test_high_concurrency_different_keys_same_quote(db_session, test_session_factory):
-    cat = Category(id="cat_hcd", name="HCD Cat", icon="cube", sort_order=0)
-    brand = Brand(id="brand_hcd", name="HCD Brand")
-    prod = Product(
-        id="prod_hcd",
-        name="HCD Prod",
-        brand_id="brand_hcd",
-        category_id="cat_hcd",
-        base_price_paisa=4000000,
-        is_available=True,
-        is_test_fixture=False,
-    )
-    var = ProductVariant(
-        id=uuid.uuid4(),
-        product_id="prod_hcd",
-        attributes={"Color": "White"},
-        price_paisa=4000000,
-        available=True,
-    )
+    prod, var = await seed_test_catalog(db_session)
     now = datetime.now(timezone.utc)
     quote = Quote(
         id="qt_hcd_test",
@@ -695,11 +644,11 @@ async def test_high_concurrency_different_keys_same_quote(db_session, test_sessi
         variant_id=var.id,
         price_paisa=var.price_paisa,
         cashback_paisa=0,
-        plans_json=[{"plan_id": "12m", "monthly_emi_paisa": 333333}],
+        plans_json=[{"plan_id": "36m", "monthly_emi_paisa": 352500}],
         created_at=now,
         expires_at=now + timedelta(minutes=10),
     )
-    db_session.add_all([cat, brand, prod, var, quote])
+    db_session.add(quote)
     await db_session.commit()
 
     async def execute_checkout(idx: int):
@@ -707,7 +656,7 @@ async def test_high_concurrency_different_keys_same_quote(db_session, test_sessi
             service = CheckoutIntentService(sess, session_factory=test_session_factory)
             return await service.create_intent(
                 quote_id="qt_hcd_test",
-                plan_id="12m",
+                plan_id="36m",
                 idempotency_key=f"distinct_key_{idx}",
             )
 

@@ -138,7 +138,7 @@ class QuoteService:
         try:
             r = await get_redis()
             await r.set(f"quote:{quote_id}", "active", ex=600)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Redis cache operation failed; continuing with database authority: %s", exc)
 
         return saved_quote

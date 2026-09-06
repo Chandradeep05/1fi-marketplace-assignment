@@ -29,12 +29,32 @@ async def create_checkout_intent(
             status_code=400,
         )
 
-    await checkout_limiter.check(request, "create_checkout_intent")
     service = CheckoutIntentService(db)
+    clean_idempotency_key = idempotency_key.strip()
+
+    # Fast replay check: legitimate retries of completed intents return 200 without tripping rate limits
+    replay_data = await service.check_existing_replay(
+        quote_id=payload.quote_id,
+        plan_id=payload.plan_id,
+        idempotency_key=clean_idempotency_key,
+    )
+    if replay_data:
+        request_id = getattr(request.state, "request_id", None)
+        if request_id:
+            replay_data["request_id"] = request_id
+        return JSONResponse(
+            status_code=200,
+            content=replay_data,
+            headers={"X-Request-ID": request_id} if request_id else None,
+        )
+
+    # Enforce rate limiting on new checkout intent attempts
+    await checkout_limiter.check(request, "create_checkout_intent")
+
     response_data, status_code = await service.create_intent(
         quote_id=payload.quote_id,
         plan_id=payload.plan_id,
-        idempotency_key=idempotency_key.strip(),
+        idempotency_key=clean_idempotency_key,
     )
 
     request_id = getattr(request.state, "request_id", None)

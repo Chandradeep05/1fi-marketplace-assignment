@@ -22,6 +22,50 @@ class CheckoutIntentService:
         self.session_factory = session_factory or async_session_factory
         self.repo = CheckoutIntentRepository(db)
 
+    async def check_existing_replay(
+        self,
+        quote_id: str,
+        plan_id: str,
+        idempotency_key: str,
+    ) -> Optional[Dict[str, Any]]:
+        payload_to_hash = {"quote_id": quote_id, "plan_id": plan_id}
+        request_hash = hashlib.sha256(
+            json.dumps(payload_to_hash, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+
+        # Redis fast path
+        try:
+            r = await get_redis()
+            cached = await r.hgetall(f"idempotency:{idempotency_key}")
+            if cached:
+                cached_hash = cached.get("hash")
+                cached_resp_raw = cached.get("response")
+                if cached_hash != request_hash:
+                    raise APIException(
+                        ErrorCode.IDEMPOTENCY_CONFLICT,
+                        "Idempotency key has already been used with a different request payload",
+                        status_code=409,
+                    )
+                if cached_resp_raw:
+                    return json.loads(cached_resp_raw)
+        except APIException:
+            raise
+        except Exception as exc:
+            logger.warning("Redis cache operation failed during replay check: %s", exc)
+
+        # Postgres fallback check
+        existing = await self.repo.get_by_idempotency_key(idempotency_key)
+        if existing:
+            if existing.request_hash != request_hash:
+                raise APIException(
+                    ErrorCode.IDEMPOTENCY_CONFLICT,
+                    "Idempotency key has already been used with a different request payload",
+                    status_code=409,
+                )
+            return existing.response_json
+
+        return None
+
     async def create_intent(
         self,
         quote_id: str,
@@ -58,8 +102,8 @@ class CheckoutIntentService:
                     return json.loads(cached_resp_raw), 200
         except APIException:
             raise
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Redis cache operation failed; continuing with database authority: %s", exc)
 
         # Postgres check existing row before transaction
         existing = await self.repo.get_by_idempotency_key(idempotency_key)
@@ -193,7 +237,7 @@ class CheckoutIntentService:
             pipe.hset(cache_key, mapping={"hash": request_hash, "response": json.dumps(final_response)})
             pipe.expire(cache_key, 86400)
             await pipe.execute()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Redis cache warming failed; continuing with database authority: %s", exc)
 
         return final_response, status_code

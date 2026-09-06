@@ -63,10 +63,14 @@ class CatalogueRepository:
         result = await self.db.execute(stmt)
         return list(result.scalars().all()), total
 
-    async def get_product_by_id(self, product_id: str) -> Optional[Product]:
+    async def get_product_by_id(self, product_id: str, allow_test_fixture: bool = False) -> Optional[Product]:
+        conditions = [Product.id == product_id]
+        if not allow_test_fixture:
+            conditions.append(Product.is_test_fixture.is_(False))
+
         stmt = (
             select(Product)
-            .where(Product.id == product_id)
+            .where(*conditions)
             .options(
                 selectinload(Product.brand),
                 selectinload(Product.category),

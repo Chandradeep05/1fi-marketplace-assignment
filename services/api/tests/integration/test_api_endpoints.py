@@ -60,3 +60,27 @@ async def test_custom_request_id_propagation():
         res = await client.get("/api/v1/health", headers={"X-Request-ID": custom_rid})
         assert res.status_code == 200
         assert res.headers["X-Request-ID"] == custom_rid
+
+
+@pytest.mark.asyncio
+async def test_idempotency_replay_bypasses_rate_limit(monkeypatch):
+    from unittest.mock import AsyncMock
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async def mock_replay(self, quote_id, plan_id, idempotency_key):
+            return {
+                "intent_id": "ci_replayed_intent_123",
+                "status": "received",
+                "quote_id": quote_id,
+                "plan_id": plan_id,
+            }
+        monkeypatch.setattr("app.domain.checkout_intent.service.CheckoutIntentService.check_existing_replay", mock_replay)
+
+        for _ in range(7):
+            res = await client.post(
+                "/api/v1/marketplace/checkout-intents",
+                json={"quote_id": "qt_mock_1", "plan_id": "12m"},
+                headers={"Idempotency-Key": "same_key_retry"},
+            )
+            assert res.status_code == 200
+            assert res.json()["intent_id"] == "ci_replayed_intent_123"

@@ -9,6 +9,7 @@ from app.domain.catalogue.repository import CatalogueRepository
 from app.domain.quote.repository import QuoteRepository
 from app.domain.quote.service import QuoteService
 from app.domain.checkout_intent.service import CheckoutIntentService
+from app.domain.checkout_intent.repository import CheckoutIntentRepository
 from app.models.models import (
     Category,
     Brand,
@@ -409,3 +410,309 @@ async def test_checkout_different_keys_same_quote_allowed(db_session, test_sessi
     assert res1[1] == 201
     assert res2[1] == 201
     assert res1[0]["intent_id"] != res2[0]["intent_id"]
+
+
+@pytest.mark.asyncio
+async def test_fixture_not_returned_by_listing(db_session):
+    cat = Category(id="fixtures_cat", name="Fixtures", icon="cube", sort_order=0)
+    brand = Brand(id="brand_fix", name="Brand Fix")
+    prod_real = Product(
+        id="prod_real_visible",
+        name="Real Visible Product",
+        brand_id="brand_fix",
+        category_id="fixtures_cat",
+        base_price_paisa=500000,
+        is_available=True,
+        is_test_fixture=False,
+    )
+    prod_fix = Product(
+        id="prod_test_fixture_hidden",
+        name="Hidden Test Fixture",
+        brand_id="brand_fix",
+        category_id="fixtures_cat",
+        base_price_paisa=500000,
+        is_available=True,
+        is_test_fixture=True,
+    )
+    db_session.add_all([cat, brand, prod_real, prod_fix])
+    await db_session.commit()
+
+    repo = CatalogueRepository(db_session)
+    products, total = await repo.get_products()
+    ids = [p.id for p in products]
+    assert "prod_real_visible" in ids
+    assert "prod_test_fixture_hidden" not in ids
+
+
+@pytest.mark.asyncio
+async def test_fixture_not_returned_by_direct_lookup(db_session):
+    cat = Category(id="cat_dl", name="Direct Lookup Cat", icon="cube", sort_order=0)
+    brand = Brand(id="brand_dl", name="Direct Lookup Brand")
+    prod_fix = Product(
+        id="prod_fixture_direct",
+        name="Fixture Direct",
+        brand_id="brand_dl",
+        category_id="cat_dl",
+        base_price_paisa=100000,
+        is_available=True,
+        is_test_fixture=True,
+    )
+    db_session.add_all([cat, brand, prod_fix])
+    await db_session.commit()
+
+    repo = CatalogueRepository(db_session)
+    product = await repo.get_product_by_id("prod_fixture_direct")
+    assert product is None
+
+
+@pytest.mark.asyncio
+async def test_fixture_cannot_generate_quote(db_session):
+    cat = Category(id="cat_qf", name="Quote Fixture Cat", icon="cube", sort_order=0)
+    brand = Brand(id="brand_qf", name="Quote Fixture Brand")
+    prod_fix = Product(
+        id="prod_fixture_quote",
+        name="Fixture Quote",
+        brand_id="brand_qf",
+        category_id="cat_qf",
+        base_price_paisa=1000000,
+        is_available=True,
+        is_test_fixture=True,
+    )
+    var_fix = ProductVariant(
+        id=uuid.uuid4(),
+        product_id="prod_fixture_quote",
+        attributes={"Color": "Red"},
+        price_paisa=1000000,
+        available=True,
+    )
+    db_session.add_all([cat, brand, prod_fix, var_fix])
+    await db_session.commit()
+
+    service = QuoteService(db_session)
+    with pytest.raises(APIException) as exc_info:
+        await service.create_quote(product_id="prod_fixture_quote", variant_id=var_fix.id)
+    assert exc_info.value.code == ErrorCode.PRODUCT_NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_quote_and_checkout_continue_when_redis_unavailable(db_session, test_session_factory, monkeypatch):
+    from unittest.mock import AsyncMock
+
+    async def mock_failing_redis():
+        mock = AsyncMock()
+        mock.set.side_effect = ConnectionError("Redis connection refused")
+        mock.hgetall.side_effect = ConnectionError("Redis connection refused")
+        mock.pipeline.side_effect = ConnectionError("Redis connection refused")
+        return mock
+
+    monkeypatch.setattr("app.domain.quote.service.get_redis", mock_failing_redis)
+    monkeypatch.setattr("app.domain.checkout_intent.service.get_redis", mock_failing_redis)
+
+    cat = Category(id="cat_red", name="Redis Cat", icon="cube", sort_order=0)
+    brand = Brand(id="brand_red", name="Redis Brand")
+    prod = Product(
+        id="prod_redis_test",
+        name="Redis Test Prod",
+        brand_id="brand_red",
+        category_id="cat_red",
+        base_price_paisa=10000000,
+        is_available=True,
+        is_test_fixture=False,
+    )
+    var_id = uuid.uuid4()
+    var = ProductVariant(
+        id=var_id,
+        product_id="prod_redis_test",
+        attributes={"Color": "Gold"},
+        price_paisa=10000000,
+        available=True,
+    )
+    rule = EmiPlanRule(
+        id=uuid.uuid4(),
+        tenure_months=12,
+        interest_rate_bps=0,
+        min_amount_paisa=1000000,
+        is_no_cost=True,
+    )
+    db_session.add_all([cat, brand, prod, var, rule])
+    await db_session.commit()
+
+    quote_service = QuoteService(db_session)
+    quote = await quote_service.create_quote(product_id="prod_redis_test", variant_id=var_id)
+    assert quote.id.startswith("qt_")
+
+    checkout_service = CheckoutIntentService(db_session, session_factory=test_session_factory)
+    resp, code = await checkout_service.create_intent(
+        quote_id=quote.id,
+        plan_id="12m",
+        idempotency_key="key_redis_down_test",
+    )
+    assert code == 201
+    assert resp["status"] == "received"
+
+    resp2, code2 = await checkout_service.create_intent(
+        quote_id=quote.id,
+        plan_id="12m",
+        idempotency_key="key_redis_down_test",
+    )
+    assert code2 == 200
+    assert resp2["intent_id"] == resp["intent_id"]
+
+
+@pytest.mark.asyncio
+async def test_non_idempotency_integrity_error_raises_500(db_session, test_session_factory, monkeypatch):
+    cat = Category(id="cat_nie", name="NIE Cat", icon="cube", sort_order=0)
+    brand = Brand(id="brand_nie", name="NIE Brand")
+    prod = Product(
+        id="prod_nie",
+        name="NIE Prod",
+        brand_id="brand_nie",
+        category_id="cat_nie",
+        base_price_paisa=2000000,
+        is_available=True,
+        is_test_fixture=False,
+    )
+    var = ProductVariant(
+        id=uuid.uuid4(),
+        product_id="prod_nie",
+        attributes={"Color": "Blue"},
+        price_paisa=2000000,
+        available=True,
+    )
+    now = datetime.now(timezone.utc)
+    quote = Quote(
+        id="qt_nie_test",
+        product_id=prod.id,
+        variant_id=var.id,
+        price_paisa=var.price_paisa,
+        cashback_paisa=0,
+        plans_json=[{"plan_id": "12m", "monthly_emi_paisa": 166666}],
+        created_at=now,
+        expires_at=now + timedelta(minutes=10),
+    )
+    db_session.add_all([cat, brand, prod, var, quote])
+    await db_session.commit()
+
+    from sqlalchemy.exc import IntegrityError
+    async def mock_save_intent_fail(self_repo, intent):
+        raise IntegrityError("INSERT INTO checkout_intents", {}, Exception("CHECK constraint failed: chk_checkout_intent_status"))
+
+    monkeypatch.setattr(CheckoutIntentRepository, "save_intent", mock_save_intent_fail)
+
+    service = CheckoutIntentService(db_session, session_factory=test_session_factory)
+    with pytest.raises(APIException) as exc_info:
+        await service.create_intent(
+            quote_id="qt_nie_test",
+            plan_id="12m",
+            idempotency_key="key_nie_unique",
+        )
+    assert exc_info.value.code == ErrorCode.INTERNAL_ERROR
+    assert exc_info.value.status_code == 500
+
+
+@pytest.mark.asyncio
+async def test_high_concurrency_same_key_produces_single_intent(db_session, test_session_factory):
+    cat = Category(id="cat_hc", name="High Concurrency Cat", icon="cube", sort_order=0)
+    brand = Brand(id="brand_hc", name="High Concurrency Brand")
+    prod = Product(
+        id="prod_hc",
+        name="High Concurrency Prod",
+        brand_id="brand_hc",
+        category_id="cat_hc",
+        base_price_paisa=3000000,
+        is_available=True,
+        is_test_fixture=False,
+    )
+    var = ProductVariant(
+        id=uuid.uuid4(),
+        product_id="prod_hc",
+        attributes={"Color": "Black"},
+        price_paisa=3000000,
+        available=True,
+    )
+    now = datetime.now(timezone.utc)
+    quote = Quote(
+        id="qt_hc_test",
+        product_id=prod.id,
+        variant_id=var.id,
+        price_paisa=var.price_paisa,
+        cashback_paisa=0,
+        plans_json=[{"plan_id": "12m", "monthly_emi_paisa": 250000}],
+        created_at=now,
+        expires_at=now + timedelta(minutes=10),
+    )
+    db_session.add_all([cat, brand, prod, var, quote])
+    await db_session.commit()
+
+    async def execute_checkout():
+        async with test_session_factory() as sess:
+            service = CheckoutIntentService(sess, session_factory=test_session_factory)
+            return await service.create_intent(
+                quote_id="qt_hc_test",
+                plan_id="12m",
+                idempotency_key="burst_key_100",
+            )
+
+    results = await asyncio.gather(*[execute_checkout() for _ in range(10)])
+
+    status_codes = [r[1] for r in results]
+    assert 201 in status_codes
+    assert all(code in (200, 201) for code in status_codes)
+
+    intent_ids = set(r[0]["intent_id"] for r in results)
+    assert len(intent_ids) == 1
+
+    from sqlalchemy import select, func
+    count_stmt = select(func.count()).select_from(CheckoutIntent).where(CheckoutIntent.idempotency_key == "burst_key_100")
+    count = (await db_session.execute(count_stmt)).scalar_one()
+    assert count == 1
+
+
+@pytest.mark.asyncio
+async def test_high_concurrency_different_keys_same_quote(db_session, test_session_factory):
+    cat = Category(id="cat_hcd", name="HCD Cat", icon="cube", sort_order=0)
+    brand = Brand(id="brand_hcd", name="HCD Brand")
+    prod = Product(
+        id="prod_hcd",
+        name="HCD Prod",
+        brand_id="brand_hcd",
+        category_id="cat_hcd",
+        base_price_paisa=4000000,
+        is_available=True,
+        is_test_fixture=False,
+    )
+    var = ProductVariant(
+        id=uuid.uuid4(),
+        product_id="prod_hcd",
+        attributes={"Color": "White"},
+        price_paisa=4000000,
+        available=True,
+    )
+    now = datetime.now(timezone.utc)
+    quote = Quote(
+        id="qt_hcd_test",
+        product_id=prod.id,
+        variant_id=var.id,
+        price_paisa=var.price_paisa,
+        cashback_paisa=0,
+        plans_json=[{"plan_id": "12m", "monthly_emi_paisa": 333333}],
+        created_at=now,
+        expires_at=now + timedelta(minutes=10),
+    )
+    db_session.add_all([cat, brand, prod, var, quote])
+    await db_session.commit()
+
+    async def execute_checkout(idx: int):
+        async with test_session_factory() as sess:
+            service = CheckoutIntentService(sess, session_factory=test_session_factory)
+            return await service.create_intent(
+                quote_id="qt_hcd_test",
+                plan_id="12m",
+                idempotency_key=f"distinct_key_{idx}",
+            )
+
+    results = await asyncio.gather(*[execute_checkout(i) for i in range(10)])
+
+    assert all(r[1] == 201 for r in results)
+    intent_ids = set(r[0]["intent_id"] for r in results)
+    assert len(intent_ids) == 10

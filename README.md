@@ -82,20 +82,39 @@ Press `w` to open in web browser, or scan the QR code with Expo Go on iOS / Andr
 
 ## 🧪 Verification & Testing
 
-To run the automated test suite verifying money math, remainder absorption, and eligibility filters:
+The repository features comprehensive automated test coverage across unit math, API contracts, schema validation, and database concurrency flows (40 passing tests).
 
+### 1. Unit Tests (No external services required)
 ```bash
-# Run backend test suite
 cd services/api
-python -m pytest tests/unit/test_emi_calculator.py -v
+pytest tests/unit -v
 ```
 
-### Verified Test Cases:
+### 2. Integration & Concurrency Tests
+Tests run out-of-the-box with isolated in-memory test databases. To execute against live containerized PostgreSQL & Redis:
+```bash
+# 1. Start background infrastructure
+docker compose up -d postgres redis
+
+# 2. Run integration & concurrency suite against PostgreSQL
+cd services/api
+TEST_DATABASE_URL=postgresql+asyncpg://marketplace:marketplace@localhost:5432/marketplace pytest tests/integration -v
+```
+
+### 3. Run Entire Test Suite
+```bash
+cd services/api
+pytest tests/ -v
+```
+
+### Key Verified Invariants:
+- **Test Fixture Sealing:** Benchmark test products (`is_test_fixture: True`) are strictly blocked from listing, direct ID lookup, and quote generation.
 - **No-cost Even Division:** ₹1,26,900 / 36 months = ₹3,525/month exactly. Total reconciles to 12,690,000 paisa.
 - **No-cost Uneven Division (Remainder Absorption Proof):** ₹9,991 / 7 months = 142,728 paisa/month × 6 + 142,732 final installment = 999,100 paisa exactly.
 - **Interest-Bearing Reducing Balance:** 850 bps (8.5% p.a.) on ₹1,26,900 over 60 months = ₹2,603.55/month, total ₹1,56,213.
-- **Eligibility Cap Filtering:** High-tenure plans whose total payable exceeds the approved credit line are excluded.
-- **Domain Guards:** Rejection of negative amounts or cashbacks exceeding product price.
+- **Concurrency & Idempotency Replay:** 10–20 concurrent identical requests serialize safely with exactly 1 intent row created and all other callers receiving deterministic 200 replays without tripping rate limits.
+- **Non-Idempotency Integrity Violation:** Check constraint or foreign key faults raise 500 `INTERNAL_ERROR` and roll back rather than returning false 409 conflict errors.
+- **Redis Outage Fail-Open:** Quote generation and checkout intent processing continue uninterrupted with database authority when Redis is unreachable.
 
 ---
 

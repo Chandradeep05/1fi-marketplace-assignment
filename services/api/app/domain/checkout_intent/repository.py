@@ -14,18 +14,21 @@ class CheckoutIntentRepository:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_quote_for_validation(self, quote_id: str) -> Optional[Quote]:
+    async def get_quote_for_validation(self, quote_id: str, lock: bool = False) -> Optional[Quote]:
         stmt = select(Quote).where(Quote.id == quote_id)
+        if lock:
+            stmt = stmt.with_for_update()
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_variant_availability(self, variant_id) -> Optional[bool]:
+    async def get_variant_availability(self, variant_id, lock: bool = False) -> Optional[bool]:
         stmt = select(ProductVariant.available).where(ProductVariant.id == variant_id)
+        if lock:
+            stmt = stmt.with_for_update()
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     async def save_intent(self, intent: CheckoutIntent) -> CheckoutIntent:
         self.db.add(intent)
-        await self.db.commit()
-        await self.db.refresh(intent)
+        await self.db.flush()
         return intent

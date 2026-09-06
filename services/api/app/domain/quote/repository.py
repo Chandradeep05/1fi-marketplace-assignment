@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Quote, Offer
@@ -32,10 +32,21 @@ class QuoteRepository:
                     or_(
                         Offer.product_id == product_id,
                         and_(Offer.category_id == category_id, Offer.product_id.is_(None)),
+                        and_(Offer.product_id.is_(None), Offer.category_id.is_(None)),  # Global active tier
                     ),
                 )
             )
-            .order_by(Offer.cashback_paisa.desc())
+            .order_by(
+                # Precedence: product (0) > category (1) > global (2) (ADR-010)
+                case(
+                    (Offer.product_id == product_id, 0),
+                    (and_(Offer.category_id == category_id, Offer.product_id.is_(None)), 1),
+                    else_=2,
+                ),
+                Offer.cashback_paisa.desc(),
+                Offer.valid_from.desc(),
+                Offer.id.asc(),
+            )
             .limit(1)
         )
         result = await self.db.execute(stmt)

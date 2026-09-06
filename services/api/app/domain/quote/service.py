@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 import uuid
@@ -13,6 +14,8 @@ from app.domain.emi_engine.models import EmptyReason
 from app.domain.emi_engine.rule_resolver import resolve_rules_for_product
 from app.domain.quote.repository import QuoteRepository
 from app.models.models import Quote
+
+logger = logging.getLogger(__name__)
 
 
 class QuoteService:
@@ -44,7 +47,20 @@ class QuoteService:
         offer = await self.quote_repo.get_best_offer(product.id, product.category_id)
         cashback_paisa = offer.cashback_paisa if offer else 0
         if cashback_paisa >= variant.price_paisa:
-            cashback_paisa = 0  # Domain guard protection
+            logger.error(
+                "Offer cashback equals or exceeds variant price — data integrity violation: "
+                "offer_id=%s product_id=%s variant_id=%s cashback_paisa=%d price_paisa=%d",
+                offer.id if offer else None,
+                product.id,
+                variant.id,
+                cashback_paisa,
+                variant.price_paisa,
+            )
+            raise APIException(
+                ErrorCode.INTERNAL_ERROR,
+                "An internal pricing configuration error occurred. Please contact support.",
+                status_code=500,
+            )
 
         # Step 5: Resolve eligibility
         ctx = CustomerContext(customer_id="demo_user")
@@ -77,6 +93,13 @@ class QuoteService:
             raise APIException(
                 ErrorCode.INSUFFICIENT_LIMIT,
                 "Purchase exceeds available credit limit. No eligible EMI plans.",
+                status_code=422,
+            )
+        elif result.empty_reason == EmptyReason.NO_ELIGIBLE_RULES:
+            raise APIException(
+                ErrorCode.NO_ELIGIBLE_RULES,
+                "No eligible EMI rules are configured for this product and price band.",
+                status_code=422,
             )
 
         plans_dicts = [

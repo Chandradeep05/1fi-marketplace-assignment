@@ -14,6 +14,10 @@ import { useMarketplaceStore } from '../../src/features/marketplace/state/useMar
 import { marketplaceApi } from '../../src/features/marketplace/api/marketplaceApi';
 import { createIdempotencyKey } from '../../src/features/marketplace/utils/idempotency';
 import { formatPaisa } from '../../src/features/marketplace/utils/formatMoney';
+import { useQuoteExpiry } from '../../src/features/marketplace/hooks/useQuoteExpiry';
+import { QuoteExpiredBanner } from '../../src/features/marketplace/components/QuoteExpiredBanner';
+import { track } from '../../src/features/marketplace/analytics/events';
+import { STRINGS } from '../../src/features/marketplace/constants/strings';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -33,14 +37,56 @@ export default function CheckoutScreen() {
   // One idempotency key per checkout session. Reused on retry so double-tap is idempotent!
   const idempotencyKeyRef = useRef<string>(createIdempotencyKey());
 
+  const isQuoteExpired = useQuoteExpiry(activeQuote?.expires_at);
+
+  // 1. Success guard MUST evaluate before session-check guard (Fixes demo-breaking bug)
+  if (successIntentId) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.successContainer}>
+          <View style={styles.successBadge}>
+            <Text style={styles.checkmark}>✓</Text>
+          </View>
+          <Text style={styles.successTitle}>{STRINGS.SUCCESS_TITLE}</Text>
+          <Text style={styles.successSubtitle}>
+            {STRINGS.SUCCESS_SUBTITLE}
+          </Text>
+
+          <View style={styles.intentCard}>
+            <Text style={styles.intentLabel}>{STRINGS.INTENT_REFERENCE}</Text>
+            <Text style={styles.intentId}>{successIntentId}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              clearCheckout();
+              router.replace('/(tabs)/shop');
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.buttonText}>{STRINGS.BACK_TO_MARKETPLACE}</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // 2. Active session guard
   if (!activeProduct || !activeQuote || !selectedPlanId) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
-          <Text style={styles.errorTitle}>No active checkout session</Text>
-          <Text style={styles.errorSubtitle}>Please select a product and EMI plan first.</Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => router.replace('/(tabs)/shop')}>
-            <Text style={styles.buttonText}>Return to Shop</Text>
+          <Text style={styles.errorTitle}>{STRINGS.NO_ACTIVE_SESSION_TITLE}</Text>
+          <Text style={styles.errorSubtitle}>{STRINGS.NO_ACTIVE_SESSION_SUBTITLE}</Text>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => {
+              clearCheckout();
+              router.replace('/(tabs)/shop');
+            }}
+          >
+            <Text style={styles.buttonText}>{STRINGS.RETURN_TO_SHOP}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -67,47 +113,38 @@ export default function CheckoutScreen() {
       );
 
       setIsSubmitting(false);
+      track('checkout_completed', {
+        intent_id: res.intent_id,
+        quote_id: activeQuote.quote_id,
+        plan_id: selectedPlanId,
+      });
       setSuccessIntentId(res.intent_id);
-      clearCheckout();
+      // NOTE: clearCheckout() is moved to the "Back to Marketplace" button handler
     } catch (err: any) {
       setIsSubmitting(false);
-      setErrorMessage(err?.error?.message || 'Failed to submit checkout intent. Please try again.');
+      const code = err?.error?.code;
+      if (code === 'QUOTE_EXPIRED') {
+        setErrorMessage(STRINGS.QUOTE_EXPIRED_ERROR);
+      } else if (code === 'NO_ELIGIBLE_RULES') {
+        setErrorMessage(STRINGS.NO_ELIGIBLE_RULES);
+      } else if (code === 'INSUFFICIENT_LIMIT') {
+        setErrorMessage(STRINGS.INSUFFICIENT_LIMIT);
+      } else if (code === 'IDEMPOTENCY_CONFLICT') {
+        setErrorMessage(STRINGS.IDEMPOTENCY_CONFLICT);
+      } else {
+        setErrorMessage(err?.error?.message || STRINGS.GENERIC_ERROR);
+      }
     }
   };
-
-  if (successIntentId) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.successContainer}>
-          <View style={styles.successBadge}>
-            <Text style={styles.checkmark}>✓</Text>
-          </View>
-          <Text style={styles.successTitle}>Your request has been noted!</Text>
-          <Text style={styles.successSubtitle}>
-            Your mutual-fund backed credit line EMI reservation has been logged.
-          </Text>
-
-          <View style={styles.intentCard}>
-            <Text style={styles.intentLabel}>Intent Reference</Text>
-            <Text style={styles.intentId}>{successIntentId}</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.replace('/(tabs)/shop')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.buttonText}>Back to Marketplace</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>Order Summary</Text>
+        <Text style={styles.heading}>{STRINGS.ORDER_SUMMARY}</Text>
+
+        {isQuoteExpired && (
+          <QuoteExpiredBanner onRefresh={() => router.back()} />
+        )}
 
         <View style={styles.summaryCard}>
           <Text style={styles.brand}>{activeProduct.brand.name}</Text>
@@ -119,13 +156,13 @@ export default function CheckoutScreen() {
           <View style={styles.divider} />
 
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Product Price</Text>
+            <Text style={styles.rowLabel}>{STRINGS.PRODUCT_PRICE}</Text>
             <Text style={styles.rowValue}>{formatPaisa(activeQuote.product_price_paisa)}</Text>
           </View>
 
           {activeQuote.cashback_paisa > 0 && (
             <View style={styles.row}>
-              <Text style={[styles.rowLabel, { color: colors.success }]}>Financing Cashback</Text>
+              <Text style={[styles.rowLabel, { color: colors.success }]}>{STRINGS.FINANCING_CASHBACK}</Text>
               <Text style={[styles.rowValue, { color: colors.success }]}>
                 - {formatPaisa(activeQuote.cashback_paisa)}
               </Text>
@@ -133,7 +170,7 @@ export default function CheckoutScreen() {
           )}
 
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Financed Amount</Text>
+            <Text style={styles.rowLabel}>{STRINGS.FINANCED_AMOUNT}</Text>
             <Text style={styles.rowValue}>
               {formatPaisa(activeQuote.financing_principal_paisa)}
             </Text>
@@ -144,12 +181,12 @@ export default function CheckoutScreen() {
           {selectedPlan && (
             <>
               <View style={styles.row}>
-                <Text style={styles.rowLabel}>EMI Tenure</Text>
+                <Text style={styles.rowLabel}>{STRINGS.EMI_TENURE}</Text>
                 <Text style={styles.rowValue}>{selectedPlan.tenure_months} months</Text>
               </View>
 
               <View style={styles.row}>
-                <Text style={styles.rowLabel}>Monthly Installment</Text>
+                <Text style={styles.rowLabel}>{STRINGS.MONTHLY_INSTALLMENT}</Text>
                 <Text style={styles.rowValue}>
                   {formatPaisa(selectedPlan.monthly_emi_paisa)} / mo
                 </Text>
@@ -157,7 +194,7 @@ export default function CheckoutScreen() {
 
               {selectedPlan.monthly_emi_paisa !== selectedPlan.final_emi_paisa && (
                 <View style={styles.row}>
-                  <Text style={styles.rowLabel}>Final Installment</Text>
+                  <Text style={styles.rowLabel}>{STRINGS.FINAL_INSTALLMENT}</Text>
                   <Text style={styles.rowValue}>
                     {formatPaisa(selectedPlan.final_emi_paisa)}
                   </Text>
@@ -165,7 +202,7 @@ export default function CheckoutScreen() {
               )}
 
               <View style={styles.row}>
-                <Text style={styles.rowLabel}>Interest Rate</Text>
+                <Text style={styles.rowLabel}>{STRINGS.INTEREST_RATE}</Text>
                 <Text style={styles.rowValue}>
                   {selectedPlan.is_no_cost
                     ? '0% (No-cost)'
@@ -176,7 +213,7 @@ export default function CheckoutScreen() {
               <View style={styles.divider} />
 
               <View style={[styles.row, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total Payable</Text>
+                <Text style={styles.totalLabel}>{STRINGS.TOTAL_PAYABLE}</Text>
                 <Text style={styles.totalValue}>
                   {formatPaisa(selectedPlan.total_payable_paisa)}
                 </Text>
@@ -193,22 +230,25 @@ export default function CheckoutScreen() {
 
         <View style={styles.securityNote}>
           <Text style={styles.securityText}>
-            🔒 Protected by idempotent submission. Your credit line will not be charged twice.
+            {STRINGS.SECURITY_NOTE}
           </Text>
         </View>
       </ScrollView>
 
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.primaryButton, isSubmitting && styles.disabledButton]}
+          style={[
+            styles.primaryButton,
+            (isSubmitting || isQuoteExpired) && styles.disabledButton,
+          ]}
           onPress={handleConfirm}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isQuoteExpired}
           activeOpacity={0.85}
         >
           {isSubmitting ? (
             <ActivityIndicator color={colors.textOnPrimary} />
           ) : (
-            <Text style={styles.buttonText}>Confirm & Proceed →</Text>
+            <Text style={styles.buttonText}>{STRINGS.CONFIRM_AND_PROCEED}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -328,7 +368,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   disabledButton: {
-    opacity: 0.7,
+    opacity: 0.5,
   },
   buttonText: {
     ...typography.buttonLabel,

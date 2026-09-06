@@ -9,6 +9,7 @@ def test_canonical_error_codes_mapping():
     assert ERROR_STATUS_MAP[ErrorCode.QUOTE_EXPIRED] == 400
     assert ERROR_STATUS_MAP[ErrorCode.PLAN_NOT_IN_QUOTE] == 400
     assert ERROR_STATUS_MAP[ErrorCode.INSUFFICIENT_LIMIT] == 422
+    assert ERROR_STATUS_MAP[ErrorCode.NO_ELIGIBLE_RULES] == 422
     assert ERROR_STATUS_MAP[ErrorCode.ELIGIBILITY_UNAVAILABLE] == 503
     assert ERROR_STATUS_MAP[ErrorCode.MISSING_IDEMPOTENCY_KEY] == 400
     assert ERROR_STATUS_MAP[ErrorCode.IDEMPOTENCY_CONFLICT] == 409

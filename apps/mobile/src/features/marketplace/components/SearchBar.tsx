@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { colors, radius, spacing, typography } from '../../../theme';
+import { STRINGS } from '../constants/strings';
 
 interface SearchBarProps {
   value: string;
@@ -11,7 +12,7 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChangeText,
-  placeholder = 'Search products, brands...',
+  placeholder = STRINGS.SEARCH_PLACEHOLDER,
 }) => {
   return (
     <View style={styles.container}>

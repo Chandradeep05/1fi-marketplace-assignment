@@ -1,9 +1,12 @@
+import logging
 import time
 import uuid
 from typing import Callable
 from fastapi import Request
 from app.core.redis import get_redis
 from app.core.error_codes import APIException, ErrorCode
+
+logger = logging.getLogger(__name__)
 
 
 class RateLimiter:
@@ -38,9 +41,13 @@ class RateLimiter:
                 )
         except APIException:
             raise
-        except Exception:
-            # Fallback gracefully if Redis is unavailable
-            pass
+        except Exception as exc:
+            # Fallback gracefully if Redis is unavailable (ADR-011)
+            logger.warning(
+                "Redis rate limiter unavailable for key '%s'; failing open for availability. Error: %s",
+                key,
+                exc,
+            )
 
 
 quotes_limiter = RateLimiter(requests_per_window=20, window_seconds=60)

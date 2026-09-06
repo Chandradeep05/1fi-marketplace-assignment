@@ -154,7 +154,46 @@ def test_domain_guard_cashback_exceeds_principal(calculator: EmiCalculator):
         )
 
 
+def test_domain_guard_cashback_equals_principal(calculator: EmiCalculator):
+    rules = [EmiPlanRule(tenure_months=12, interest_rate_bps=0, min_amount_paisa=100000)]
+    with pytest.raises(ValueError, match="cashback_paisa.*must be < principal_paisa"):
+        calculator.compute_plans(
+            principal_paisa=100000,
+            rules=rules,
+            cashback_paisa=100000,
+        )
+
+
+def test_domain_guard_negative_cashback(calculator: EmiCalculator):
+    rules = [EmiPlanRule(tenure_months=12, interest_rate_bps=0, min_amount_paisa=100000)]
+    with pytest.raises(ValueError, match="cashback_paisa must be >= 0"):
+        calculator.compute_plans(
+            principal_paisa=100000,
+            rules=rules,
+            cashback_paisa=-500,
+        )
+
+
 def test_domain_guard_negative_principal(calculator: EmiCalculator):
     rules = [EmiPlanRule(tenure_months=12, interest_rate_bps=0, min_amount_paisa=100000)]
     with pytest.raises(ValueError, match="principal_paisa must be > 0"):
         calculator.compute_plans(principal_paisa=-10, rules=rules)
+
+
+def test_reconciliation_invariant_across_varied_tenures_and_rates(calculator: EmiCalculator):
+    test_cases = [
+        (999100, 7, 0),        # uneven remainder no-cost
+        (13490000, 36, 0),     # even no-cost
+        (12999900, 60, 850),   # reducing balance odd amount
+        (5432100, 18, 1200),   # 12% p.a.
+        (1234567, 9, 750),     # prime-number paisa over 9m
+    ]
+    for principal, tenure, bps in test_cases:
+        rules = [EmiPlanRule(tenure_months=tenure, interest_rate_bps=bps, min_amount_paisa=1000)]
+        result = calculator.compute_plans(principal_paisa=principal, rules=rules)
+        assert len(result.plans) == 1
+        plan = result.plans[0]
+        # Invariant: monthly * (n-1) + final == total payable
+        reconciled = plan.monthly_emi_paisa * (plan.tenure_months - 1) + plan.final_emi_paisa
+        assert reconciled == plan.total_payable_paisa, f"Failed reconciliation for {principal} @ {bps}bps over {tenure}m"
+

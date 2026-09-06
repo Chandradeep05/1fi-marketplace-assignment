@@ -23,7 +23,18 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
   selectVariant: (variantId) => set({ selectedVariantId: variantId }),
   selectPlan: (planId) => set({ selectedPlanId: planId }),
   setQuote: (quote) => set({ activeQuote: quote }),
-  setActiveProduct: (product) => set({ activeProduct: product }),
+  setActiveProduct: (product) =>
+    set((state) => {
+      if (product && state.activeProduct?.id !== product.id) {
+        return {
+          activeProduct: product,
+          selectedVariantId: null,
+          selectedPlanId: null,
+          activeQuote: null,
+        };
+      }
+      return { activeProduct: product };
+    }),
 
   clearCheckout: () =>
     set({

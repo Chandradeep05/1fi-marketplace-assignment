@@ -108,9 +108,10 @@ Key architectural choices are preserved in [`docs/decisions.md`](docs/decisions.
 - **ADR-004:** Exclusion of fabricated processing fees.
 - **ADR-005:** Idempotency key scoping notes for future customer authentication.
 - **ADR-006:** URL-safe slug identifiers for catalogue items, UUIDs for variants, ULIDs for quotes/intents.
-- **ADR-007:** EMI rule resolution hierarchy: `product > brand > category > global`.
-- **ADR-008:** Checkout intent creation records user commitment without hard inventory reservation.
-- **ADR-009:** Credit limit filtering on `total_payable_paisa`.
+- **ADR-008:** Checkout intent creation records user commitment without hard inventory reservation; quote reuse allowed.
+- **ADR-009:** Credit limit filtering on `total_payable_paisa` repayment obligation.
+- **ADR-010:** Deterministic commercial offer precedence (`product > category > global`).
+- **ADR-011:** Edge rate-limit fail-open availability strategy.
 
 ---
 

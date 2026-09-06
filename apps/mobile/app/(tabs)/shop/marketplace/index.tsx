@@ -17,6 +17,9 @@ import { ProductCardSkeleton } from '../../../../src/features/marketplace/compon
 import { useCategories } from '../../../../src/features/marketplace/hooks/useCategories';
 import { useProducts } from '../../../../src/features/marketplace/hooks/useProducts';
 import { useMarketplaceStore } from '../../../../src/features/marketplace/state/useMarketplaceStore';
+import { track } from '../../../../src/features/marketplace/analytics/events';
+import { STRINGS } from '../../../../src/features/marketplace/constants/strings';
+import { isMarketplaceEnabled } from '../../../../src/features/marketplace/config/featureFlags';
 
 export default function MarketplaceHome() {
   const router = useRouter();
@@ -25,6 +28,11 @@ export default function MarketplaceHome() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Track marketplace open on mount
+  useEffect(() => {
+    track('marketplace_opened');
+  }, []);
 
   // 350ms debounce on search
   useEffect(() => {
@@ -50,6 +58,7 @@ export default function MarketplaceHome() {
   const products = productsData?.data || [];
 
   const handleProductPress = (product: any) => {
+    track('product_viewed', { product_id: product.id, name: product.name });
     setActiveProduct(product);
     router.push(`/shop/marketplace/${product.id}` as any);
   };
@@ -59,7 +68,7 @@ export default function MarketplaceHome() {
       <SearchBar
         value={searchTerm}
         onChangeText={setSearchTerm}
-        placeholder="Search 1Fi Marketplace..."
+        placeholder={STRINGS.SEARCH_PLACEHOLDER}
       />
 
       <EligibilityStrip />
@@ -83,20 +92,20 @@ export default function MarketplaceHome() {
       ) : isError ? (
         <View style={styles.centerContainer}>
           <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={styles.errorTitle}>Unable to load products</Text>
+          <Text style={styles.errorTitle}>{STRINGS.ERROR_LOADING_PRODUCTS}</Text>
           <Text style={styles.errorSubtitle}>Please check your connection and try again.</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-            <Text style={styles.retryText}>Try Again</Text>
+            <Text style={styles.retryText}>{STRINGS.RETRY_BUTTON}</Text>
           </TouchableOpacity>
         </View>
       ) : products.length === 0 ? (
         <View style={styles.centerContainer}>
           <Text style={styles.emptyIcon}>🔍</Text>
-          <Text style={styles.emptyTitle}>No products found</Text>
+          <Text style={styles.emptyTitle}>{STRINGS.NO_PRODUCTS_FOUND}</Text>
           <Text style={styles.emptySubtitle}>
             {debouncedSearch
               ? `No matches found for "${debouncedSearch}".`
-              : 'No products in this category yet.'}
+              : STRINGS.NO_PRODUCTS_SUBTITLE}
           </Text>
         </View>
       ) : (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, radius, spacing, typography } from '../../../theme';
+import { STRINGS } from '../constants/strings';
 
 interface QuoteExpiredBannerProps {
   onRefresh: () => void;
@@ -16,7 +17,7 @@ export const QuoteExpiredBanner: React.FC<QuoteExpiredBannerProps> = ({
       <View style={styles.textContainer}>
         <Text style={styles.icon}>⏱️</Text>
         <Text style={styles.message}>
-          This quote has expired. Refresh for current EMI rates.
+          {STRINGS.QUOTE_EXPIRED_DESC}
         </Text>
       </View>
       <TouchableOpacity
@@ -26,7 +27,7 @@ export const QuoteExpiredBanner: React.FC<QuoteExpiredBannerProps> = ({
         activeOpacity={0.8}
       >
         <Text style={styles.refreshText}>
-          {isLoading ? 'Refreshing...' : 'Refresh Quote'}
+          {isLoading ? 'Refreshing...' : STRINGS.REFRESH_QUOTE}
         </Text>
       </TouchableOpacity>
     </View>

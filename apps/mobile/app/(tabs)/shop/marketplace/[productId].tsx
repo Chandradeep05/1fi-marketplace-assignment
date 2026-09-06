@@ -21,10 +21,19 @@ import { QuoteExpiredBanner } from '../../../../../src/features/marketplace/comp
 import { EmiPlanSkeleton } from '../../../../../src/features/marketplace/components/Skeleton';
 import { useQuoteExpiry } from '../../../../../src/features/marketplace/hooks/useQuoteExpiry';
 import { formatPaisa, formatSavings } from '../../../../../src/features/marketplace/utils/formatMoney';
+import { track } from '../../../../../src/features/marketplace/analytics/events';
+import { STRINGS } from '../../../../../src/features/marketplace/constants/strings';
+import { isMarketplaceEnabled } from '../../../../../src/features/marketplace/config/featureFlags';
 
 export default function ProductDetailScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isMarketplaceEnabled) {
+      router.replace('/(tabs)/shop');
+    }
+  }, []);
 
   const {
     selectedVariantId,
@@ -62,6 +71,7 @@ export default function ProductDetailScreen() {
   const fetchQuoteForVariant = async (variantId: string) => {
     const generation = ++quoteGenerationRef.current;
 
+    track('quote_requested', { product_id: productId, variant_id: variantId });
     setQuote(null);
     selectPlan(null);
     setQuoteError(null);
@@ -85,6 +95,7 @@ export default function ProductDetailScreen() {
       const recommendedPlan = quote.plans.find((p) => p.recommended) || quote.plans[0];
       if (recommendedPlan) {
         selectPlan(recommendedPlan.plan_id);
+        track('plan_selected', { plan_id: recommendedPlan.plan_id, tenure_months: recommendedPlan.tenure_months });
       }
     } catch (err: any) {
       if (generation !== quoteGenerationRef.current) {
@@ -100,6 +111,11 @@ export default function ProductDetailScreen() {
     fetchQuoteForVariant(variantId);
   };
 
+  const handleSelectPlan = (planId: string, tenureMonths: number) => {
+    selectPlan(planId);
+    track('plan_selected', { plan_id: planId, tenure_months: tenureMonths });
+  };
+
   const selectedPlan = activeQuote?.plans.find((p) => p.plan_id === selectedPlanId);
   const selectedVariant = product?.variants?.find((v) => v.id === selectedVariantId);
   const currentPrice = selectedVariant?.price_paisa || product?.base_price_paisa || 0;
@@ -113,8 +129,8 @@ export default function ProductDetailScreen() {
     !quoteLoading;
 
   const ctaLabel = selectedPlan
-    ? `${formatPaisa(selectedPlan.monthly_emi_paisa)}/month   Proceed with EMI →`
-    : 'Select an EMI plan to continue';
+    ? `${formatPaisa(selectedPlan.monthly_emi_paisa)}/month   ${STRINGS.PROCEED_WITH_EMI}`
+    : STRINGS.CTA_SELECT_PLAN_HINT;
 
   if (isProductLoading) {
     return (
@@ -127,9 +143,9 @@ export default function ProductDetailScreen() {
   if (isProductError || !product) {
     return (
       <SafeAreaView style={styles.centerContainer}>
-        <Text style={styles.errorText}>Product unavailable</Text>
+        <Text style={styles.errorText}>{STRINGS.PRODUCT_UNAVAILABLE}</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>← Go Back</Text>
+          <Text style={styles.backButtonText}>{STRINGS.BACK_BUTTON}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -228,13 +244,13 @@ export default function ProductDetailScreen() {
                   key={plan.plan_id}
                   plan={plan}
                   isSelected={selectedPlanId === plan.plan_id}
-                  onSelect={() => selectPlan(plan.plan_id)}
+                  onSelect={() => handleSelectPlan(plan.plan_id, plan.tenure_months)}
                   cashbackPaisa={activeQuote.cashback_paisa}
                 />
               ))
             ) : (
               <Text style={styles.noPlansText}>
-                No eligible EMI plans available for this variant.
+                {STRINGS.NO_ELIGIBLE_RULES}
               </Text>
             )}
           </View>
@@ -248,7 +264,13 @@ export default function ProductDetailScreen() {
       <StickyCTA
         label={ctaLabel}
         disabled={!canProceed}
-        onPress={() => router.push('/marketplace/checkout' as any)}
+        onPress={() => {
+          track('checkout_started', {
+            quote_id: activeQuote?.quote_id,
+            plan_id: selectedPlanId,
+          });
+          router.push('/marketplace/checkout' as any);
+        }}
       />
     </SafeAreaView>
   );

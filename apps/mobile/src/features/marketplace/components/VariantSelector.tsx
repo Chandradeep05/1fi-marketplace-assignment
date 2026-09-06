@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ProductVariant } from '@1fi/contracts';
 import { colors, radius, spacing, typography } from '../../../theme';
+import { STRINGS } from '../constants/strings';
 
 interface VariantSelectorProps {
   variants: ProductVariant[];
@@ -16,7 +17,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Select Variant</Text>
+      <Text style={styles.sectionTitle}>{STRINGS.SELECT_VARIANT}</Text>
       <View style={styles.variantList}>
         {variants.map((v) => {
           const isSelected = selectedVariantId === v.id;
@@ -36,7 +37,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
               activeOpacity={0.8}
               accessibilityRole="radio"
               accessibilityState={{ selected: isSelected, disabled: !isAvailable }}
-              accessibilityLabel={`${label}${!isAvailable ? ' - Out of stock' : ''}`}
+              accessibilityLabel={`${label}${!isAvailable ? ` - ${STRINGS.OUT_OF_STOCK}` : ''}`}
             >
               <Text
                 style={[
@@ -45,7 +46,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
                   !isAvailable && styles.disabledText,
                 ]}
               >
-                {label} {!isAvailable && '(Out of stock)'}
+                {label} {!isAvailable && `(${STRINGS.OUT_OF_STOCK})`}
               </Text>
             </TouchableOpacity>
           );

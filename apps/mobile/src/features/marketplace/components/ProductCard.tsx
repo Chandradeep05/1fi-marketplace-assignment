@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Product } from '@1fi/contracts';
 import { colors, radius, spacing, typography } from '../../../theme';
 import { formatPaisa, formatSavings } from '../utils/formatMoney';
+import { STRINGS } from '../constants/strings';
 
 interface ProductCardProps {
   product: Product;
@@ -54,7 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress }) =>
         </View>
 
         <View style={styles.emiBadge}>
-          <Text style={styles.emiBadgeText}>No-Cost EMI Available</Text>
+          <Text style={styles.emiBadgeText}>{STRINGS.NO_COST_BADGE}</Text>
         </View>
       </View>
     </TouchableOpacity>

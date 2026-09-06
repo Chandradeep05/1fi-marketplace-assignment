@@ -2,16 +2,23 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { colors, spacing, typography } from '../../../src/theme';
 import { SegmentedToggle } from '../../../src/features/marketplace/components/SegmentedToggle';
+import { isMarketplaceEnabled } from '../../../src/features/marketplace/config/featureFlags';
+import { STRINGS } from '../../../src/features/marketplace/constants/strings';
 import MarketplaceHome from './marketplace';
 
 export default function ShopScreen() {
-  const tabs = ['Top Brands', 'Nearby Stores', '1Fi Marketplace'];
-  const [activeTab, setActiveTab] = useState<string>('1Fi Marketplace');
+  const tabs = isMarketplaceEnabled
+    ? [STRINGS.TAB_TOP_BRANDS, STRINGS.TAB_NEARBY_STORES, STRINGS.TAB_1FI_MARKETPLACE]
+    : [STRINGS.TAB_TOP_BRANDS, STRINGS.TAB_NEARBY_STORES];
+
+  const [activeTab, setActiveTab] = useState<string>(
+    isMarketplaceEnabled ? STRINGS.TAB_1FI_MARKETPLACE : STRINGS.TAB_TOP_BRANDS
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Shop</Text>
+        <Text style={styles.headerTitle}>{STRINGS.SHOP_TITLE}</Text>
       </View>
 
       <SegmentedToggle
@@ -20,16 +27,16 @@ export default function ShopScreen() {
         onTabChange={setActiveTab}
       />
 
-      {activeTab === '1Fi Marketplace' ? (
+      {isMarketplaceEnabled && activeTab === STRINGS.TAB_1FI_MARKETPLACE ? (
         <MarketplaceHome />
       ) : (
         <View style={styles.outOfScopeContainer}>
           <Text style={styles.outOfScopeIcon}>
-            {activeTab === 'Top Brands' ? '🏷️' : '📍'}
+            {activeTab === STRINGS.TAB_TOP_BRANDS ? '🏷️' : '📍'}
           </Text>
           <Text style={styles.outOfScopeTitle}>{activeTab}</Text>
           <Text style={styles.outOfScopeSubtitle}>
-            Browse online products with instant EMI in the 1Fi Marketplace tab.
+            {STRINGS.OUT_OF_SCOPE_SUBTITLE}
           </Text>
         </View>
       )}

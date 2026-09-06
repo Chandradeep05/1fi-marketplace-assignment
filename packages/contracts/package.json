@@ -1,0 +1,13 @@
+{
+  "name": "@1fi/contracts",
+  "version": "1.0.0",
+  "description": "Shared API contracts and TypeScript types for 1Fi Marketplace",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

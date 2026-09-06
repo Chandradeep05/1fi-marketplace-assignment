@@ -106,7 +106,7 @@ class EmiCalculator:
             monthly_emi_exact = int(emi_exact.to_integral_value(ROUND_HALF_UP))
             total_payable = monthly_emi_exact * n
 
-        monthly_emi = math.floor(total_payable / n)
+        monthly_emi = total_payable // n
         final_emi = total_payable - monthly_emi * (n - 1)
 
         # Invariant assertion

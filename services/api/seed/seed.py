@@ -168,12 +168,12 @@ VARIANTS = [
 ]
 
 IMAGES = [
-    {"id": uuid.uuid4(), "product_id": "iphone-17-pro", "url": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&q=80", "sort_order": 0},
-    {"id": uuid.uuid4(), "product_id": "iphone-17-pro", "url": "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&q=80", "sort_order": 1},
-    {"id": uuid.uuid4(), "product_id": "galaxy-s25-ultra", "url": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&q=80", "sort_order": 0},
-    {"id": uuid.uuid4(), "product_id": "macbook-pro-m4", "url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80", "sort_order": 0},
-    {"id": uuid.uuid4(), "product_id": "sony-wh1000xm5", "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80", "sort_order": 0},
-    {"id": uuid.uuid4(), "product_id": "test-cable-7m", "url": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&q=80", "sort_order": 0},
+    {"id": uuid.UUID("d0000000-0000-0000-0000-000000000001"), "product_id": "iphone-17-pro", "url": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&q=80", "sort_order": 0},
+    {"id": uuid.UUID("d0000000-0000-0000-0000-000000000002"), "product_id": "iphone-17-pro", "url": "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&q=80", "sort_order": 1},
+    {"id": uuid.UUID("d0000000-0000-0000-0000-000000000003"), "product_id": "galaxy-s25-ultra", "url": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&q=80", "sort_order": 0},
+    {"id": uuid.UUID("d0000000-0000-0000-0000-000000000004"), "product_id": "macbook-pro-m4", "url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80", "sort_order": 0},
+    {"id": uuid.UUID("d0000000-0000-0000-0000-000000000005"), "product_id": "sony-wh1000xm5", "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80", "sort_order": 0},
+    {"id": uuid.UUID("d0000000-0000-0000-0000-000000000006"), "product_id": "test-cable-7m", "url": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&q=80", "sort_order": 0},
 ]
 
 OFFERS = [

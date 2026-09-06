@@ -25,7 +25,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
   setQuote: (quote) => set({ activeQuote: quote }),
   setActiveProduct: (product) =>
     set((state) => {
-      if (product && state.activeProduct?.id !== product.id) {
+      if (!product || state.activeProduct?.id !== product.id) {
         return {
           activeProduct: product,
           selectedVariantId: null,

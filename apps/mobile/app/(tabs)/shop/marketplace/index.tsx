@@ -29,10 +29,14 @@ export default function MarketplaceHome() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Track marketplace open on mount
+  // Feature flag guard: redirect to shop root if marketplace is disabled
   useEffect(() => {
+    if (!isMarketplaceEnabled) {
+      router.replace('/(tabs)/shop');
+      return;
+    }
     track('marketplace_opened');
-  }, []);
+  }, [router]);
 
   // 350ms debounce on search
   useEffect(() => {

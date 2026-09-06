@@ -1,12 +1,12 @@
 name: CI
 
-on:
+'on':
   push:
     branches: [master, main]
   pull_request:
     branches: [master, main]
 
- jobs:
+jobs:
   test:
     name: Test & Typecheck
     runs-on: ubuntu-latest

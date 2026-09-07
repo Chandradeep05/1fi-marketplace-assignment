@@ -69,12 +69,15 @@ export default function ProductDetailScreen() {
     }
   }, [product, productId]);
 
-  const fetchQuoteForVariant = async (variantId: string) => {
+  const fetchQuoteForVariant = async (variantId: string, keepSelectedPlan: boolean = false) => {
     const generation = ++quoteGenerationRef.current;
+    const planToPreserve = keepSelectedPlan ? selectedPlanId : null;
 
     track('quote_requested', { product_id: productId, variant_id: variantId });
     setQuote(null);
-    selectPlan(null);
+    if (!keepSelectedPlan) {
+      selectPlan(null);
+    }
     setQuoteError(null);
     setQuoteLoading(true);
 
@@ -92,11 +95,17 @@ export default function ProductDetailScreen() {
       setQuote(quote);
       setQuoteLoading(false);
 
-      // Auto-select recommended plan if available
-      const recommendedPlan = quote.plans.find((p) => p.recommended) || quote.plans[0];
-      if (recommendedPlan) {
-        selectPlan(recommendedPlan.plan_id);
-        track('plan_selected', { plan_id: recommendedPlan.plan_id, tenure_months: recommendedPlan.tenure_months });
+      // Preserve explicit user selection if still valid in the new quote
+      const matchingPlan = planToPreserve ? quote.plans.find((p) => p.plan_id === planToPreserve) : null;
+      if (matchingPlan) {
+        selectPlan(matchingPlan.plan_id);
+      } else {
+        // Otherwise (first load or variant changed), default to recommended plan
+        const recommendedPlan = quote.plans.find((p) => p.recommended) || quote.plans[0];
+        if (recommendedPlan) {
+          selectPlan(recommendedPlan.plan_id);
+          track('plan_selected', { plan_id: recommendedPlan.plan_id, tenure_months: recommendedPlan.tenure_months });
+        }
       }
     } catch (err: any) {
       if (generation !== quoteGenerationRef.current) {
@@ -109,7 +118,7 @@ export default function ProductDetailScreen() {
 
   const handleVariantSelect = (variantId: string) => {
     selectVariant(variantId);
-    fetchQuoteForVariant(variantId);
+    fetchQuoteForVariant(variantId, false);
   };
 
   const handleSelectPlan = (planId: string, tenureMonths: number) => {
@@ -223,7 +232,7 @@ export default function ProductDetailScreen() {
             {isExpired && (
               <QuoteExpiredBanner
                 isLoading={quoteLoading}
-                onRefresh={() => selectedVariantId && fetchQuoteForVariant(selectedVariantId)}
+                onRefresh={() => selectedVariantId && fetchQuoteForVariant(selectedVariantId, true)}
               />
             )}
 
@@ -234,7 +243,7 @@ export default function ProductDetailScreen() {
                 <Text style={styles.quoteErrorText}>{quoteError}</Text>
                 <TouchableOpacity
                   style={styles.quoteRetryButton}
-                  onPress={() => selectedVariantId && fetchQuoteForVariant(selectedVariantId)}
+                  onPress={() => selectedVariantId && fetchQuoteForVariant(selectedVariantId, true)}
                 >
                   <Text style={styles.quoteRetryText}>Retry</Text>
                 </TouchableOpacity>
@@ -270,7 +279,13 @@ export default function ProductDetailScreen() {
             quote_id: activeQuote?.quote_id,
             plan_id: selectedPlanId,
           });
-          router.push('/marketplace/checkout' as any);
+          router.push({
+            pathname: '/marketplace/checkout',
+            params: {
+              planId: selectedPlanId || '',
+              variantId: selectedVariantId || '',
+            },
+          } as any);
         }}
       />
     </SafeAreaView>

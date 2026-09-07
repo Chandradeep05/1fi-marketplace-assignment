@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=390, initial-scale=1.0">
 <title>1Fi Marketplace Mobile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
     --primary: #7C3AED;
@@ -43,7 +43,7 @@
     color: var(--text-p);
   }
   .island { width: 110px; height: 26px; background: #000; border-radius: 20px; }
-  .content { flex: 1; overflow-y: auto; padding-bottom: 90px; }
+  .content { flex: 1; overflow-y: auto; padding-bottom: 84px; }
   .header {
     background: var(--surface);
     padding: 12px 16px;
@@ -60,6 +60,103 @@
   .header-title { font-size: 18px; font-weight: 800; color: var(--text-p); }
   .back-btn { background: none; border: none; font-size: 15px; cursor: pointer; color: var(--primary); font-weight: 700; }
   
+  /* Shop Hero Banner */
+  .shop-hero {
+    background: #1E0A8A;
+    padding: 16px 18px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    color: #fff;
+  }
+  .hero-pill {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+    display: inline-block;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  .shop-hero-row { display: flex; justify-content: space-between; align-items: center; }
+  .shop-hero-title { font-size: 22px; font-weight: 800; line-height: 1.25; }
+  .shop-hero-sub { font-size: 11px; color: rgba(255, 255, 255, 0.85); margin-top: 6px; line-height: 1.4; }
+  .shop-hero-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  /* Segmented Sub Tabs */
+  .sub-tabs {
+    display: flex;
+    background: #F3F0FA;
+    border-radius: 28px;
+    padding: 4px;
+    margin: 12px 16px;
+    border: 1px solid #E8E4F5;
+  }
+  .sub-tab {
+    flex: 1;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-s);
+    cursor: pointer;
+    border-radius: 24px;
+    position: relative;
+  }
+  .sub-tab.active {
+    background: #FFFFFF;
+    color: var(--primary-dark);
+    font-weight: 800;
+    box-shadow: 0 2px 6px rgba(91, 33, 182, 0.1);
+  }
+  .sub-tab.active::after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 3px;
+    background: var(--primary-dark);
+    border-radius: 2px;
+    margin: 3px auto 0;
+  }
+
+  /* Brand Cards */
+  .brand-card {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    margin: 0 16px 12px;
+    border: 1px solid var(--bdr);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  }
+  .brand-logo-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 11px;
+    margin-right: 14px;
+    text-align: center;
+    padding: 4px;
+  }
+
   /* Eligibility Strip */
   .eligibility-strip {
     background: var(--surface);
@@ -277,23 +374,44 @@
   .intent-label { font-size: 11px; color: var(--text-s); font-weight: 600; text-transform: uppercase; }
   .intent-id { font-size: 14px; font-weight: 800; color: var(--primary); font-family: monospace; margin-top: 4px; }
   
-  /* Tab Bar */
+  /* Production 5-Tab Bar with Top Purple Indicator */
   .tab-bar {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 70px;
+    height: 68px;
     background: var(--surface);
-    border-top: 1px solid var(--bdr);
+    border-top: 1px solid #F3F4F6;
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 50;
-    padding-bottom: 10px;
+    padding-bottom: 6px;
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.05);
   }
-  .tab-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: var(--text-s); cursor: pointer; gap: 4px; }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9CA3AF;
+    cursor: pointer;
+    gap: 3px;
+    position: relative;
+    padding-top: 6px;
+    width: 20%;
+  }
   .tab-item.active { color: var(--primary); }
+  .tab-indicator {
+    position: absolute;
+    top: 0;
+    width: 28px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
 </style>
 </head>
 <body>
@@ -308,95 +426,469 @@
   <div class="content" id="app"></div>
 
   <div class="tab-bar" id="tabBar">
-    <div class="tab-item"><span style="font-size:18px;">🏷️</span><span>Top Brands</span></div>
-    <div class="tab-item active"><span style="font-size:18px;">🛍️</span><span>1Fi Market</span></div>
-    <div class="tab-item"><span style="font-size:18px;">📍</span><span>Nearby Stores</span></div>
+    <div class="tab-item" id="tab-home" onclick="setMainTab('home')">
+      <img src="icons/tab_home.png" style="width:22px; height:22px; object-fit:contain; opacity:0.65;"><span>Home</span>
+    </div>
+    <div class="tab-item active" id="tab-shop" onclick="setMainTab('shop')">
+      <div class="tab-indicator"></div>
+      <img src="icons/tab_shop.png" style="width:22px; height:22px; object-fit:contain; filter: invert(24%) sepia(90%) saturate(4529%) hue-rotate(258deg) brightness(94%) contrast(97%);"><span>Shop</span>
+    </div>
+    <div class="tab-item" id="tab-dues" onclick="setMainTab('dues')">
+      <img src="icons/tab_dues.png" style="width:22px; height:22px; object-fit:contain; opacity:0.65;"><span>EMI Dues</span>
+    </div>
+    <div class="tab-item" id="tab-limit" onclick="setMainTab('limit')">
+      <img src="icons/tab_limit.png" style="width:22px; height:22px; object-fit:contain; opacity:0.65;"><span>Limit</span>
+    </div>
+    <div class="tab-item" id="tab-profile" onclick="setMainTab('profile')">
+      <img src="icons/tab_profile.png" style="width:22px; height:22px; object-fit:contain; opacity:0.65;"><span>Profile</span>
+    </div>
   </div>
 </div>
 
 <script>
-let currentView = 'catalogue';
-let activeCat = 'all';
+let currentTab = 'shop'; // 'home', 'shop', 'dues', 'limit', 'profile'
+let shopSubTab = 'marketplace'; // 'brands', 'nearby', 'marketplace'
+let currentView = 'catalogue'; // 'catalogue', 'detail', 'checkout', 'success'
+let activeProductId = 'iphone-17-pro';
+let activeVariant = '128 GB';
 let activePlan = '36m';
 let searchQuery = '';
+let activeCat = 'all';
+let currentIntentId = '';
+
+const PRODUCTS = [
+  {
+    id: 'iphone-17-pro',
+    name: 'Apple iPhone 17 Pro',
+    brand: 'Apple',
+    category: 'smartphones',
+    price: 134900,
+    mrp: 139900,
+    img: 'https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg',
+    sub: 'A19 Pro Chip · Titanium Frame · Pro Camera System',
+    badge: '0% No-Cost EMI',
+    variants: ['128 GB', '256 GB', '512 GB', '1 TB'],
+    plans: {
+      '36m': { tenure: 36, monthly: 3747, total: 134900, isNoCost: true, rec: true },
+      '24m': { tenure: 24, monthly: 5620, total: 134900, isNoCost: true, rec: false },
+      '12m': { tenure: 12, monthly: 11241, total: 134900, isNoCost: true, rec: false },
+    }
+  },
+  {
+    id: 'galaxy-s25-ultra',
+    name: 'Samsung Galaxy S25 Ultra',
+    brand: 'Samsung',
+    category: 'smartphones',
+    price: 129900,
+    mrp: 134900,
+    img: 'https://images.samsung.com/is/image/samsung/p6pim/in/2401/gallery/in-galaxy-s24-s928-sm-s928bztqins-thumb-539573341',
+    sub: 'Galaxy AI · S Pen · 200MP Camera · Titanium Frame',
+    badge: 'Recommended',
+    variants: ['256 GB', '512 GB', '1 TB'],
+    plans: {
+      '36m': { tenure: 36, monthly: 3608, total: 129900, isNoCost: true, rec: true },
+      '24m': { tenure: 24, monthly: 5412, total: 129900, isNoCost: true, rec: false },
+      '12m': { tenure: 12, monthly: 10825, total: 129900, isNoCost: true, rec: false },
+    }
+  },
+  {
+    id: 'sony-wh1000xm5',
+    name: 'Sony WH-1000XM6',
+    brand: 'Sony',
+    category: 'audio',
+    price: 29990,
+    mrp: 34990,
+    img: 'https://www.sony.co.in/image/5d02da5df552836db894cead8a68f5f3?fmt=pjpeg&wid=330',
+    sub: 'Industry-leading Noise Cancelling · 30hr Battery · Hi-Res Audio',
+    badge: '0% EMI',
+    variants: ['Black', 'Silver', 'Midnight Blue'],
+    plans: {
+      '36m': { tenure: 36, monthly: 833, total: 29990, isNoCost: true, rec: true },
+      '24m': { tenure: 24, monthly: 1249, total: 29990, isNoCost: true, rec: false },
+      '12m': { tenure: 12, monthly: 2499, total: 29990, isNoCost: true, rec: false },
+    }
+  },
+  {
+    id: 'macbook-pro-14-m4',
+    name: 'Apple MacBook Pro 14" M4',
+    brand: 'Apple',
+    category: 'laptops',
+    price: 169900,
+    mrp: 179900,
+    img: 'https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/mbp14-spaceblack-select-202310?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1697311054290',
+    sub: 'Apple M4 Pro chip · 18GB Unified Memory · Liquid Retina XDR',
+    badge: 'Flagship Deal',
+    variants: ['512 GB SSD', '1 TB SSD'],
+    plans: {
+      '36m': { tenure: 36, monthly: 4719, total: 169900, isNoCost: true, rec: true },
+      '24m': { tenure: 24, monthly: 7079, total: 169900, isNoCost: true, rec: false },
+      '12m': { tenure: 12, monthly: 14158, total: 169900, isNoCost: true, rec: false },
+    }
+  }
+];
+
+function generateIntentUlid() {
+  const chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  let rand = '';
+  for (let i = 0; i < 20; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+  return 'ci_01JK' + rand.slice(0, 18);
+}
+
+function selectProduct(id) {
+  activeProductId = id;
+  const prod = PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
+  activeVariant = prod.variants[0];
+  currentView = 'detail';
+  render();
+}
+
+function formatInr(val) {
+  return '₹' + Number(val).toLocaleString('en-IN');
+}
+
+function updateTabBar() {
+  const tabs = ['home', 'shop', 'dues', 'limit', 'profile'];
+  tabs.forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) {
+      if (t === currentTab) {
+        el.className = 'tab-item active';
+        el.innerHTML = '<div class="tab-indicator"></div>' + getTabContent(t);
+      } else {
+        el.className = 'tab-item';
+        el.innerHTML = getTabContent(t);
+      }
+    }
+  });
+}
+
+function getTabContent(t) {
+  const active = (t === currentTab);
+  const filterStyle = active
+    ? 'filter: invert(24%) sepia(90%) saturate(4529%) hue-rotate(258deg) brightness(94%) contrast(97%);'
+    : 'opacity: 0.65;';
+  const iconImg = `<img src="icons/tab_${t}.png" style="width:22px; height:22px; object-fit:contain; ${filterStyle}">`;
+
+  switch (t) {
+    case 'home': return `${iconImg}<span>Home</span>`;
+    case 'shop': return `${iconImg}<span>Shop</span>`;
+    case 'dues': return `${iconImg}<span>EMI Dues</span>`;
+    case 'limit': return `${iconImg}<span>Limit</span>`;
+    case 'profile': return `${iconImg}<span>Profile</span>`;
+  }
+}
+
+function setMainTab(tab) {
+  currentTab = tab;
+  currentView = 'catalogue';
+  updateTabBar();
+  render();
+}
 
 function render() {
   const app = document.getElementById('app');
   const tb = document.getElementById('tabBar');
-  
-  if (currentView === 'catalogue') {
+  updateTabBar();
+
+  if (currentTab === 'home') {
     tb.style.display = 'flex';
     app.innerHTML = `
-      <div class="header">
-        <div class="header-left">
-          <div class="logo">1F</div>
-          <span class="header-title">1Fi Marketplace</span>
-        </div>
-        <span style="font-size:18px;">🔔</span>
-      </div>
-      <div class="eligibility-strip">
-        <div class="pill">⚡ Mutual Fund Credit Line</div>
-        <div class="strip-row">
-          <span class="strip-label">Available for Instant EMI:</span>
-          <span class="strip-amount">₹1,50,000</span>
-        </div>
-        <div class="strip-sub">Total pre-approved credit: ₹2,00,000 · Active limits used: ₹50,000</div>
-      </div>
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" placeholder="Search electronics, phones, laptops..." value="${searchQuery}" oninput="searchQuery=this.value; render()">
-      </div>
-      <div class="chips">
-        <div class="chip ${activeCat==='all'?'active':''}" onclick="activeCat='all'; render()">All</div>
-        <div class="chip ${activeCat==='smartphones'?'active':''}" onclick="activeCat='smartphones'; render()">📱 Smartphones</div>
-        <div class="chip ${activeCat==='laptops'?'active':''}" onclick="activeCat='laptops'; render()">💻 Laptops</div>
-        <div class="chip ${activeCat==='audio'?'active':''}" onclick="activeCat='audio'; render()">🎧 Audio</div>
-      </div>
-      <div class="grid">
-        <div class="card" onclick="currentView='detail'; render()">
-          <span class="card-badge">0% No-Cost EMI</span>
-          <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg" class="card-img" alt="iPhone 17 Pro">
-          <div class="card-title">Apple iPhone 17 Pro</div>
-          <div class="card-price-row">
-            <span class="card-price">₹1,34,900</span>
-            <span class="card-mrp">₹1,39,900</span>
+      <div style="padding:16px;">
+        <div style="background:#20037A; border-radius:20px; padding:18px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.75); letter-spacing:0.8px; margin-bottom:4px;">GET STARTED</div>
+            <div style="font-size:20px; font-weight:800; line-height:1.25;">Shop on <span style="color:#FACC15;">no-cost EMI</span></div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.85); margin-top:6px; max-width:180px;">Backed by mutual funds, No credit pull, quick approval.</div>
+            <button onclick="setMainTab('shop')" style="background:#fff; color:#161422; border:none; border-radius:20px; padding:8px 16px; font-weight:700; font-size:12px; margin-top:12px; cursor:pointer;">Check eligibility →</button>
           </div>
-          <div class="card-emi">from ₹3,747/mo</div>
-        </div>
-        <div class="card">
-          <span class="card-badge">Recommended</span>
-          <img src="https://images.samsung.com/is/image/samsung/p6pim/in/2401/gallery/in-galaxy-s24-s928-sm-s928bztqins-thumb-539573341" class="card-img" alt="Samsung S25">
-          <div class="card-title">Samsung Galaxy S25 Ultra</div>
-          <div class="card-price-row">
-            <span class="card-price">₹1,29,900</span>
-            <span class="card-mrp">₹1,34,900</span>
+          <div style="text-align:center; transform:rotate(-6deg);">
+            <div style="font-size:32px; font-weight:900;">0%</div>
+            <div style="font-size:11px; font-weight:900; color:#FACC15; letter-spacing:1px;">INTEREST</div>
           </div>
-          <div class="card-emi">from ₹3,608/mo</div>
         </div>
-        <div class="card">
-          <span class="card-badge">0% EMI</span>
-          <img src="https://www.sony.co.in/image/5d02da5df552836db894cead8a68f5f3?fmt=pjpeg&wid=330" class="card-img" alt="Sony Headphones">
-          <div class="card-title">Sony WH-1000XM6</div>
-          <div class="card-price-row">
-            <span class="card-price">₹29,990</span>
-            <span class="card-mrp">₹34,990</span>
-          </div>
-          <div class="card-emi">from ₹833/mo</div>
+
+        <div style="display:flex; align-items:center; margin:20px 0 10px; gap:8px;">
+          <div style="width:3px; height:14px; background:#7C3AED; border-radius:2px;"></div>
+          <span style="font-size:12px; font-weight:800; color:#7C3AED; letter-spacing:0.6px;">OFFERS</span>
         </div>
-        <div class="card">
-          <span class="card-badge">0% No-Cost EMI</span>
-          <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/mbp14-spacegray-select-202310?wid=904&hei=840&fmt=jpeg" class="card-img" alt="MacBook">
-          <div class="card-title">MacBook Pro M4</div>
-          <div class="card-price-row">
-            <span class="card-price">₹1,69,900</span>
-            <span class="card-mrp">₹1,79,900</span>
+
+        <div onclick="setMainTab('shop'); selectProduct('iphone-17-pro')" style="background:#1E0D08; border-radius:18px; padding:16px; color:#fff; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+          <div>
+            <div style="font-size:10px; font-weight:800; color:#F59E0B; margin-bottom:4px;">APPLE FLAGSHIP DEAL</div>
+            <div style="font-size:16px; font-weight:800; line-height:1.3; margin-bottom:8px;">Upgrade to iPhone 17 Pro with Easy EMIs</div>
+            <div style="background:rgba(255,255,255,0.15); border-radius:12px; padding:4px 8px; font-size:10px; font-weight:700; display:inline-block;">✓ Upto 24m no cost EMI</div>
           </div>
-          <div class="card-emi">from ₹4,719/mo</div>
+          <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg" style="width:70px; height:90px; object-fit:contain;">
+        </div>
+
+        <div style="display:flex; justify-content:center; gap:6px; margin:10px 0 16px;">
+          <div style="width:6px; height:6px; border-radius:3px; background:#D1D5DB;"></div>
+          <div style="width:6px; height:6px; border-radius:3px; background:#D1D5DB;"></div>
+          <div style="width:20px; height:6px; border-radius:3px; background:#7C3AED;"></div>
+          <div style="width:6px; height:6px; border-radius:3px; background:#D1D5DB;"></div>
+          <div style="width:6px; height:6px; border-radius:3px; background:#D1D5DB;"></div>
+        </div>
+
+        <div style="display:flex; align-items:center; margin:16px 0 10px; gap:8px;">
+          <div style="width:3px; height:14px; background:#7C3AED; border-radius:2px;"></div>
+          <span style="font-size:12px; font-weight:800; color:#7C3AED; letter-spacing:0.6px;">SHOP USING 1FI AT TOP BRANDS</span>
+        </div>
+
+        <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px;">
+          <div onclick="setMainTab('shop')" style="text-align:center; width:64px; cursor:pointer;">
+            <div style="width:60px; height:60px; background:#fff; border-radius:16px; display:flex; align-items:center; justify-content:center; border:1px solid #E5E7EB; font-size:22px; margin-bottom:4px;"></div>
+            <span style="font-size:11px; font-weight:600; color:#4B5563;">Apple</span>
+          </div>
+          <div onclick="setMainTab('shop')" style="text-align:center; width:64px; cursor:pointer;">
+            <div style="width:60px; height:60px; background:#0284C7; border-radius:16px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:800; margin-bottom:4px;">RD</div>
+            <span style="font-size:11px; font-weight:600; color:#4B5563;">Reliance</span>
+          </div>
+          <div onclick="setMainTab('shop')" style="text-align:center; width:64px; cursor:pointer;">
+            <div style="width:60px; height:60px; background:#0F766E; border-radius:16px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; margin-bottom:4px;">croma</div>
+            <span style="font-size:11px; font-weight:600; color:#4B5563;">Croma</span>
+          </div>
+          <div onclick="setMainTab('shop')" style="text-align:center; width:64px; cursor:pointer;">
+            <div style="width:60px; height:60px; background:#DC2626; border-radius:16px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; margin-bottom:4px;">VS</div>
+            <span style="font-size:11px; font-weight:600; color:#4B5563;">Vijay</span>
+          </div>
         </div>
       </div>
     `;
+    return;
+  }
+
+  if (currentTab === 'profile') {
+    tb.style.display = 'flex';
+    app.innerHTML = `
+      <div style="padding:16px;">
+        <div style="font-size:26px; font-weight:800; color:var(--text-p);">Profile</div>
+        <div style="font-size:13px; color:var(--text-s); margin:4px 0 16px;">Manage your account settings and personal preferences.</div>
+        <div style="background:#fff; border-radius:18px; padding:16px; display:flex; align-items:center; gap:14px; border:1px solid var(--bdr);">
+          <div style="width:52px; height:52px; border-radius:26px; background:#EDE9FE; color:#7C3AED; font-size:22px; font-weight:800; display:flex; align-items:center; justify-content:center;">U</div>
+          <div>
+            <div style="font-size:17px; font-weight:800; color:var(--text-p);">User</div>
+            <div style="font-size:13px; color:var(--text-s); margin-top:2px;">+91 XXXXXXXXXX</div>
+          </div>
+        </div>
+
+        <div style="font-size:11px; font-weight:800; color:#9CA3AF; letter-spacing:0.8px; margin:22px 0 10px;">QUICK ACTIONS</div>
+        
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#fff; border-radius:14px; padding:12px 14px; display:flex; align-items:center; border:1px solid var(--bdr);">
+            <span style="font-size:18px; margin-right:12px;">👤</span>
+            <div style="flex:1;"><div style="font-size:13px; font-weight:700;">Profile details</div><div style="font-size:11px; color:var(--text-s);">Name, contact and KYC info</div></div>
+            <span style="color:#9CA3AF; font-size:18px;">›</span>
+          </div>
+          <div style="background:#fff; border-radius:14px; padding:12px 14px; display:flex; align-items:center; border:1px solid var(--bdr);">
+            <span style="font-size:18px; margin-right:12px;">📦</span>
+            <div style="flex:1;"><div style="font-size:13px; font-weight:700;">Purchases</div><div style="font-size:11px; color:var(--text-s);">Orders, invoices and loan status</div></div>
+            <span style="color:#9CA3AF; font-size:18px;">›</span>
+          </div>
+          <div style="background:#fff; border-radius:14px; padding:12px 14px; display:flex; align-items:center; border:1px solid var(--bdr);">
+            <span style="font-size:18px; margin-right:12px;">🐖</span>
+            <div style="flex:1;"><div style="font-size:13px; font-weight:700;">Pledge history</div><div style="font-size:11px; color:var(--text-s);">Funds you pledged or released</div></div>
+            <span style="color:#9CA3AF; font-size:18px;">›</span>
+          </div>
+          <div style="background:#fff; border-radius:14px; padding:12px 14px; display:flex; align-items:center; border:1px solid var(--bdr);">
+            <span style="font-size:18px; margin-right:12px;">👥</span>
+            <div style="flex:1;"><div style="font-size:13px; font-weight:700;">Invite friends</div><div style="font-size:11px; color:var(--text-s);">Share the app, earn rewards</div></div>
+            <span style="background:#EDE9FE; color:#7C3AED; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; margin-right:6px;">EARN ₹500</span>
+            <span style="color:#9CA3AF; font-size:18px;">›</span>
+          </div>
+          <div style="background:#fff; border-radius:14px; padding:12px 14px; display:flex; align-items:center; border:1px solid var(--bdr);">
+            <span style="font-size:18px; margin-right:12px;">❓</span>
+            <div style="flex:1;"><div style="font-size:13px; font-weight:700;">Support & FAQs</div><div style="font-size:11px; color:var(--text-s);">Find answers or contact us</div></div>
+            <span style="color:#9CA3AF; font-size:18px;">›</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (currentTab === 'dues') {
+    tb.style.display = 'flex';
+    app.innerHTML = `
+      <div style="padding:16px;">
+        <div style="font-size:26px; font-weight:800; color:var(--text-p);">EMI Dues</div>
+        <div style="font-size:13px; color:var(--text-s); margin:4px 0 16px;">Track upcoming installments and repayment schedules.</div>
+        <div style="background:#fff; border-radius:18px; padding:18px; border:1px solid var(--bdr);">
+          <div style="display:flex; align-items:center; gap:6px; color:#16A34A; font-size:11px; font-weight:800; margin-bottom:8px;">
+            <div style="width:8px; height:8px; border-radius:4px; background:#16A34A;"></div> ALL DUES CLEAR
+          </div>
+          <div style="font-size:32px; font-weight:900; color:var(--text-p);">₹0</div>
+          <div style="font-size:12px; color:var(--text-s); margin-top:4px;">Next cycle starts 1st of next month</div>
+          <div style="height:1px; background:#F3F4F6; margin:14px 0;"></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;">
+            <span style="color:var(--text-s);">e-Mandate Status:</span>
+            <span style="color:#16A34A; font-weight:800;">ACTIVE (HDFC Bank)</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (currentTab === 'limit') {
+    tb.style.display = 'flex';
+    app.innerHTML = `
+      <div style="padding:16px;">
+        <div style="font-size:26px; font-weight:800; color:var(--text-p);">Credit Limit</div>
+        <div style="font-size:13px; color:var(--text-s); margin:4px 0 16px;">Mutual fund portfolio valuation and credit line.</div>
+        <div style="background:#1E0A8A; color:#fff; border-radius:20px; padding:20px;">
+          <div style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.75); letter-spacing:0.8px;">AVAILABLE CREDIT LINE</div>
+          <div style="font-size:34px; font-weight:900; margin:4px 0;">₹5,00,000</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.85);">0% interest on eligible merchant tenures</div>
+          <div style="height:1px; background:rgba(255,255,255,0.15); margin:16px 0;"></div>
+          <div style="display:flex; justify-content:space-between;">
+            <div><div style="font-size:11px; opacity:0.8;">Pledged Mutual Funds</div><div style="font-weight:800; font-size:14px;">₹10,50,000</div></div>
+            <div><div style="font-size:11px; opacity:0.8;">Max LTV</div><div style="font-weight:800; font-size:14px;">50%</div></div>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // SHOP TAB
+  if (currentView === 'catalogue') {
+    tb.style.display = 'flex';
+
+    let contentHtml = '';
+    if (shopSubTab === 'brands') {
+      contentHtml = `
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" placeholder="Search online stores...">
+        </div>
+        <div style="font-size:18px; font-weight:800; color:var(--text-p); margin:0 16px 12px;">Top Brands</div>
+        <div class="brand-card" onclick="shopSubTab='marketplace'; render()">
+          <div class="brand-logo-box" style="background:#E11D48;">AIR INDIA</div>
+          <div><div style="font-weight:800; font-size:15px;">Air India</div><div style="font-size:12px; color:var(--text-s);">No-cost EMIs upto 18 months</div></div>
+        </div>
+        <div class="brand-card" onclick="shopSubTab='marketplace'; render()">
+          <div class="brand-logo-box" style="background:#111827;"> Reseller</div>
+          <div><div style="font-weight:800; font-size:15px;">Apple Premium Reseller</div><div style="font-size:12px; color:var(--text-s);">No-cost EMIs upto 24 months</div></div>
+        </div>
+        <div class="brand-card" onclick="shopSubTab='marketplace'; render()">
+          <div class="brand-logo-box" style="background:#7E22CE;">CARATLANE</div>
+          <div><div style="font-weight:800; font-size:15px;">Caratlane</div><div style="font-size:12px; color:var(--text-s);">No-cost EMIs upto 12 months</div></div>
+        </div>
+        <div class="brand-card" onclick="shopSubTab='marketplace'; render()">
+          <div class="brand-logo-box" style="background:#0284C7;">Reliance</div>
+          <div><div style="font-weight:800; font-size:15px;">Reliance Digital</div><div style="font-size:12px; color:var(--text-s);">No-cost EMIs upto 24 months</div></div>
+        </div>
+      `;
+    } else if (shopSubTab === 'nearby') {
+      contentHtml = `
+        <div class="search-box">
+          <span class="search-icon">📍</span>
+          <input class="search-input" placeholder="Search nearby stores...">
+        </div>
+        <div style="font-size:18px; font-weight:800; color:var(--text-p); margin:0 16px 12px;">Nearby Partner Stores</div>
+        <div class="brand-card">
+          <div class="brand-logo-box" style="background:#4F46E5;">🏬</div>
+          <div><div style="font-weight:800; font-size:15px;">Croma Megastore</div><div style="font-size:12px; color:var(--text-s);">Indiranagar 100ft Road · 1.2 km away</div></div>
+        </div>
+        <div class="brand-card">
+          <div class="brand-logo-box" style="background:#4F46E5;">🏬</div>
+          <div><div style="font-weight:800; font-size:15px;">Reliance Digital Plaza</div><div style="font-size:12px; color:var(--text-s);">Koramangala 80ft Road · 2.4 km away</div></div>
+        </div>
+      `;
+    } else {
+      // 1Fi Marketplace
+      const filtered = PRODUCTS.filter(p => {
+        if (activeCat !== 'all' && p.category !== activeCat) return false;
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const match = p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.sub.toLowerCase().includes(q);
+          if (!match) return false;
+        }
+        return true;
+      });
+
+      let cardsHtml = '';
+      if (filtered.length === 0) {
+        cardsHtml = `
+          <div style="grid-column:span 2; text-align:center; padding:40px 16px; color:var(--text-s);">
+            <div style="font-size:32px; margin-bottom:8px;">🔍</div>
+            <div style="font-weight:700; color:var(--text-p);">No products found</div>
+            <div style="font-size:12px; margin-top:4px;">Try a different search query or category filter.</div>
+          </div>
+        `;
+      } else {
+        cardsHtml = filtered.map(p => {
+          const minEmi = p.plans['36m']?.monthly || Object.values(p.plans)[0].monthly;
+          return `
+            <div class="card" onclick="selectProduct('${p.id}')">
+              <span class="card-badge">${p.badge}</span>
+              <img src="${p.img}" class="card-img" alt="${p.name}">
+              <div class="card-title">${p.name}</div>
+              <div class="card-price-row">
+                <span class="card-price">${formatInr(p.price)}</span>
+                <span class="card-mrp">${formatInr(p.mrp)}</span>
+              </div>
+              <div class="card-emi">from ${formatInr(minEmi)}/mo</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      contentHtml = `
+        <div class="eligibility-strip">
+          <div class="pill">⚡ Mutual Fund Credit Line</div>
+          <div class="strip-row">
+            <span class="strip-label">Available for Instant EMI:</span>
+            <span class="strip-amount">₹1,50,000</span>
+          </div>
+          <div class="strip-sub">Total pre-approved credit: ₹2,00,000 · Active limits used: ₹50,000</div>
+        </div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" placeholder="Search electronics, phones, laptops..." value="${searchQuery}" oninput="searchQuery=this.value; render()">
+        </div>
+        <div class="chips">
+          <div class="chip ${activeCat==='all'?'active':''}" onclick="activeCat='all'; render()">All</div>
+          <div class="chip ${activeCat==='smartphones'?'active':''}" onclick="activeCat='smartphones'; render()">📱 Smartphones</div>
+          <div class="chip ${activeCat==='laptops'?'active':''}" onclick="activeCat='laptops'; render()">💻 Laptops</div>
+          <div class="chip ${activeCat==='audio'?'active':''}" onclick="activeCat='audio'; render()">🎧 Audio</div>
+        </div>
+        <div class="grid">
+          ${cardsHtml}
+        </div>
+      `;
+    }
+
+    app.innerHTML = `
+      <!-- Screenshot 1 Hero Banner -->
+      <div class="shop-hero">
+        <div class="hero-pill">✨ NO-COST EMIs</div>
+        <div class="shop-hero-row">
+          <div>
+            <div class="shop-hero-title">Shop today,<br><i>Pay later using</i><br><b>Mutual funds.</b></div>
+            <div class="shop-hero-sub">No credit score required. No interest.<br>Backed by your investments.</div>
+          </div>
+          <div class="shop-hero-badge">🛍️</div>
+        </div>
+      </div>
+
+      <!-- Segmented Sub-Tabs -->
+      <div class="sub-tabs">
+        <div class="sub-tab ${shopSubTab==='brands'?'active':''}" onclick="shopSubTab='brands'; render()">Top Brands</div>
+        <div class="sub-tab ${shopSubTab==='nearby'?'active':''}" onclick="shopSubTab='nearby'; render()">Nearby Stores</div>
+        <div class="sub-tab ${shopSubTab==='marketplace'?'active':''}" onclick="shopSubTab='marketplace'; render()">1Fi Marketplace</div>
+      </div>
+
+      ${contentHtml}
+    `;
   } else if (currentView === 'detail') {
     tb.style.display = 'none';
+    const prod = PRODUCTS.find(p => p.id === activeProductId) || PRODUCTS[0];
+    const plan = prod.plans[activePlan] || prod.plans['36m'] || Object.values(prod.plans)[0];
+    const variantsHtml = prod.variants.map(v => `
+      <div class="variant-chip ${activeVariant===v?'active':''}" onclick="activeVariant='${v}'; render()">${v}</div>
+    `).join('');
+
     app.innerHTML = `
       <div class="header">
         <button class="back-btn" onclick="currentView='catalogue'; render()">← Back</button>
@@ -408,21 +900,18 @@ function render() {
         <span style="font-weight:800;">09:42 remaining</span>
       </div>
       <div class="detail-hero">
-        <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg" class="card-img" style="height:150px;">
-        <div class="detail-title">Apple iPhone 17 Pro</div>
-        <div class="detail-sub">A19 Pro Chip · Titanium Frame · Pro Camera System</div>
+        <img src="${prod.img}" class="card-img" style="height:150px;">
+        <div class="detail-title">${prod.name}</div>
+        <div class="detail-sub">${prod.sub}</div>
         <div class="detail-pricing">
-          <span class="detail-price">₹1,34,900</span>
-          <span class="detail-mrp">₹1,39,900</span>
-          <span class="save-pill">Save ₹5,000 (3% off)</span>
+          <span class="detail-price">${formatInr(prod.price)}</span>
+          <span class="detail-mrp">${formatInr(prod.mrp)}</span>
+          <span class="save-pill">Save ${formatInr(prod.mrp - prod.price)} (${Math.round((1 - prod.price/prod.mrp)*100)}% off)</span>
         </div>
       </div>
-      <div class="sec-label">Select Storage</div>
+      <div class="sec-label">Select Option</div>
       <div class="variant-row">
-        <div class="variant-chip">128 GB</div>
-        <div class="variant-chip active">256 GB</div>
-        <div class="variant-chip">512 GB</div>
-        <div class="variant-chip">1 TB</div>
+        ${variantsHtml}
       </div>
       <div class="sec-label">Choose EMI Financing Plan</div>
       <div class="emi-list">
@@ -434,10 +923,10 @@ function render() {
             </div>
             <span class="emi-badge badge-rec">RECOMMENDED · 0% EMI</span>
           </div>
-          <div class="emi-amount">₹3,747 / month</div>
+          <div class="emi-amount">${formatInr(prod.plans['36m'].monthly)} / month</div>
           <div class="emi-footer">
             <span>No-Cost EMI · 0% Interest</span>
-            <span>Total: ₹1,34,900</span>
+            <span>Total: ${formatInr(prod.plans['36m'].total)}</span>
           </div>
         </div>
         <div class="emi-card ${activePlan==='24m'?'selected':''}" onclick="activePlan='24m'; render()">
@@ -448,10 +937,10 @@ function render() {
             </div>
             <span class="emi-badge" style="background:#EDE9FE; color:#5B21B6;">0% EMI</span>
           </div>
-          <div class="emi-amount">₹5,620 / month</div>
+          <div class="emi-amount">${formatInr(prod.plans['24m'].monthly)} / month</div>
           <div class="emi-footer">
             <span>No-Cost EMI · 0% Interest</span>
-            <span>Total: ₹1,34,900</span>
+            <span>Total: ${formatInr(prod.plans['24m'].total)}</span>
           </div>
         </div>
         <div class="emi-card ${activePlan==='12m'?'selected':''}" onclick="activePlan='12m'; render()">
@@ -462,21 +951,24 @@ function render() {
             </div>
             <span class="emi-badge" style="background:#EDE9FE; color:#5B21B6;">0% EMI</span>
           </div>
-          <div class="emi-amount">₹11,241 / month</div>
+          <div class="emi-amount">${formatInr(prod.plans['12m'].monthly)} / month</div>
           <div class="emi-footer">
             <span>No-Cost EMI · 0% Interest</span>
-            <span>Total: ₹1,34,900</span>
+            <span>Total: ${formatInr(prod.plans['12m'].total)}</span>
           </div>
         </div>
       </div>
       <div class="sticky-cta">
         <button class="cta-btn" onclick="currentView='checkout'; render()">
-          Proceed with ${activePlan} EMI Plan →
+          Proceed with ${plan.tenure}m EMI Plan (${formatInr(plan.monthly)}/mo) →
         </button>
       </div>
     `;
   } else if (currentView === 'checkout') {
     tb.style.display = 'none';
+    const prod = PRODUCTS.find(p => p.id === activeProductId) || PRODUCTS[0];
+    const plan = prod.plans[activePlan] || prod.plans['36m'] || Object.values(prod.plans)[0];
+
     app.innerHTML = `
       <div class="header">
         <button class="back-btn" onclick="currentView='detail'; render()">← Back</button>
@@ -490,29 +982,29 @@ function render() {
       <div class="checkout-sec">
         <div class="checkout-title">Order Summary</div>
         <div style="display:flex; gap:12px; align-items:center;">
-          <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg" style="width:54px; height:54px; object-fit:contain;">
+          <img src="${prod.img}" style="width:54px; height:54px; object-fit:contain;">
           <div>
-            <div style="font-size:14px; font-weight:800;">Apple iPhone 17 Pro</div>
-            <div style="font-size:12px; color:var(--text-s);">256GB · Natural Titanium</div>
-            <div style="font-size:14px; font-weight:800; color:var(--primary); margin-top:2px;">₹1,34,900</div>
+            <div style="font-size:14px; font-weight:800;">${prod.name}</div>
+            <div style="font-size:12px; color:var(--text-s);">${activeVariant}</div>
+            <div style="font-size:14px; font-weight:800; color:var(--primary); margin-top:2px;">${formatInr(prod.price)}</div>
           </div>
         </div>
       </div>
       <div class="checkout-sec">
         <div class="checkout-title">Financing Breakdown</div>
         <div class="checkout-row"><span>Credit Line Provider</span><span style="font-weight:600;">1Fi Capital Partners</span></div>
-        <div class="checkout-row"><span>Product Price</span><span>₹1,34,900</span></div>
+        <div class="checkout-row"><span>Product Price</span><span>${formatInr(prod.price)}</span></div>
         <div class="checkout-row"><span>Financing Cashback</span><span style="color:var(--success); font-weight:700;">- ₹0</span></div>
         <div class="checkout-row"><span>Processing Fee</span><span style="color:var(--success); font-weight:700;">FREE (₹0)</span></div>
-        <div class="checkout-row"><span>Tenure</span><span style="font-weight:600;">${activePlan}</span></div>
+        <div class="checkout-row"><span>Tenure</span><span style="font-weight:600;">${plan.tenure} Months</span></div>
         <div class="checkout-row"><span>Interest Rate</span><span style="color:var(--success); font-weight:700;">0.0% (No-Cost EMI)</span></div>
         <div class="checkout-row bold">
           <span>Monthly Installment:</span>
-          <span style="color:var(--primary);">${activePlan==='36m'?'₹3,747':activePlan==='24m'?'₹5,620':'₹11,241'} / mo</span>
+          <span style="color:var(--primary);">${formatInr(plan.monthly)} / mo</span>
         </div>
       </div>
       <div class="sticky-cta">
-        <button class="cta-btn" onclick="currentView='success'; render()">
+        <button class="cta-btn" onclick="currentIntentId = generateIntentUlid(); currentView='success'; render()">
           Confirm & Create Checkout Intent →
         </button>
       </div>
@@ -526,7 +1018,7 @@ function render() {
         <div class="success-sub">Your mutual-fund backed credit line EMI reservation has been logged with PostgreSQL authority.</div>
         <div class="intent-box">
           <div class="intent-label">INTENT REFERENCE ULID</div>
-          <div class="intent-id">ci_01JKX94B8M2P4ZQ1Y5W3R7</div>
+          <div class="intent-id">${currentIntentId}</div>
           <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; color:var(--text-s);">
             <span>Status: <b style="color:var(--success);">Received</b></span>
             <span>Database: <b>PostgreSQL Verified</b></span>
@@ -537,25 +1029,6 @@ function render() {
         </button>
       </div>
     `;
-  } else if (currentView === 'fixture') {
-    tb.style.display = 'none';
-    app.innerHTML = `
-      <div class="header">
-        <button class="back-btn" onclick="currentView='catalogue'; render()">← Back</button>
-        <span style="font-size:14px; font-weight:700;">Product Not Found</span>
-        <span></span>
-      </div>
-      <div style="text-align:center; padding:60px 24px;">
-        <div style="font-size:48px; margin-bottom:16px;">🚫</div>
-        <div style="font-size:18px; font-weight:800; color:var(--text-p); margin-bottom:8px;">404: Test Fixture Excluded</div>
-        <div style="font-size:13px; color:var(--text-s); line-height:1.5; margin-bottom:24px;">
-          Product <code>test-cable-7m</code> has <code>is_test_fixture = true</code> and is strictly blocked from public listing, direct lookup, quotes, and checkout.
-        </div>
-        <button class="cta-btn" onclick="currentView='catalogue'; render()">
-          Return to Public Catalogue
-        </button>
-      </div>
-    `;
   }
 }
 
@@ -563,6 +1036,8 @@ window.setView = function(v) { currentView = v; render(); };
 window.setCat = function(c) { activeCat = c; render(); };
 window.setPlan = function(p) { activePlan = p; render(); };
 window.setSearch = function(s) { searchQuery = s; render(); };
+window.selectProduct = selectProduct;
+window.setMainTab = setMainTab;
 
 render();
 </script>

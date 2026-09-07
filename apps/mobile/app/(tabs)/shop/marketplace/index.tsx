@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Product } from '@1fi/contracts';
 import { colors, spacing, typography, radius } from '../../../../src/theme';
 import { SearchBar } from '../../../../src/features/marketplace/components/SearchBar';
 import { EligibilityStrip } from '../../../../src/features/marketplace/components/EligibilityStrip';
@@ -59,12 +60,34 @@ export default function MarketplaceHome() {
   });
 
   const categories = categoriesData?.data || [];
-  const products = productsData?.data || [];
+  const rawProducts = productsData?.data || [];
 
-  const handleProductPress = (product: any) => {
+  // Reactive filtering ensures instant UI updates across All -> Category -> All switches,
+  // robust multi-faceted search (name, brand, description), and eliminates stale data.
+  const filteredProducts = useMemo(() => {
+    return rawProducts.filter((product) => {
+      // 1. Category filter
+      if (selectedCategory && product.category_id !== selectedCategory) {
+        return false;
+      }
+      // 2. Search filter
+      if (debouncedSearch && debouncedSearch.trim()) {
+        const query = debouncedSearch.trim().toLowerCase();
+        const nameMatch = product.name?.toLowerCase().includes(query);
+        const brandMatch = product.brand?.name?.toLowerCase().includes(query);
+        const descMatch = product.description?.toLowerCase().includes(query);
+        if (!nameMatch && !brandMatch && !descMatch) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [rawProducts, selectedCategory, debouncedSearch]);
+
+  const handleProductPress = (product: Product) => {
     track('product_viewed', { product_id: product.id, name: product.name });
     setActiveProduct(product);
-    router.push(`/shop/marketplace/${product.id}` as any);
+    router.push(`/marketplace/${product.id}` as any);
   };
 
   return (
@@ -102,19 +125,21 @@ export default function MarketplaceHome() {
             <Text style={styles.retryText}>{STRINGS.RETRY_BUTTON}</Text>
           </TouchableOpacity>
         </View>
-      ) : products.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <View style={styles.centerContainer}>
           <Text style={styles.emptyIcon}>🔍</Text>
           <Text style={styles.emptyTitle}>{STRINGS.NO_PRODUCTS_FOUND}</Text>
           <Text style={styles.emptySubtitle}>
             {debouncedSearch
               ? `No matches found for "${debouncedSearch}".`
+              : selectedCategory
+              ? 'No products currently available in this category.'
               : STRINGS.NO_PRODUCTS_SUBTITLE}
           </Text>
         </View>
       ) : (
         <FlatList
-          data={products}
+          data={filteredProducts}
           keyExtractor={(item) => item.id}
           numColumns={2}
           contentContainerStyle={styles.listContent}

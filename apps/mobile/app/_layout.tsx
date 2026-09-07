@@ -26,6 +26,13 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
+            name="marketplace/[productId]"
+            options={{
+              presentation: 'card',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
             name="marketplace/checkout"
             options={{
               presentation: 'card',

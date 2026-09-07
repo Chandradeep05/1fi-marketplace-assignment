@@ -134,9 +134,25 @@ Key architectural choices are preserved in [`docs/decisions.md`](docs/decisions.
 
 ---
 
-## 📱 Mobile App UI & User Flow
+### 👑 1Fi Production Shell & Navigation Integration
 
-The mobile client is built with React Native & Expo, matching 1Fi's exact design tokens (`#7C3AED` primary, `#EDE9FE` accent, `#F5F5F7` background) with full end-to-end user flows:
+The application embeds the Marketplace directly inside the official **1Fi Production Shell** with the 5-tab floating bottom navigation and exact brand sticker icons:
+
+| 1. Shop → 1Fi Marketplace | 2. Shop → Top Brands |
+| :---: | :---: |
+| <img src="docs/screenshots/09_1fi_shell_marketplace.png" width="360" alt="1Fi Marketplace in Shell" /> | <img src="docs/screenshots/10_1fi_shell_top_brands.png" width="360" alt="Shop Top Brands" /> |
+| **Active 1Fi Marketplace Tab**<br/>Integrated within Shop under 3 sub-tabs (`Top Brands`, `Nearby Stores`, `1Fi Marketplace`) with floating bottom navigation. | **Top Brands Screen**<br/>Production brand partner cards (Air India, Apple Premium Reseller, Caratlane, Reliance Digital) with active tab underline indicator. |
+
+| 3. Home Screen (1Fi Production) | 4. Profile Screen (User Settings) |
+| :---: | :---: |
+| <img src="docs/screenshots/11_1fi_shell_home.png" width="360" alt="Home Screen" /> | <img src="docs/screenshots/12_1fi_shell_profile.png" width="360" alt="Profile Screen" /> |
+| **Production Home Tab**<br/>Hero card with `0% INTEREST` graphic, `Check eligibility →`, `Apple Flagship Deal` offer card, and top brands scroll. | **User Profile Tab**<br/>User profile card with masked phone number (`+91 XXXXXXXXXX`), and Quick Actions menu. |
+
+---
+
+### 🛒 Functional Marketplace End-to-End User Flow
+
+The complete functional shopping flow inside the Marketplace:
 
 | 1. Marketplace Catalogue | 2. Category Filter (Smartphones) |
 | :---: | :---: |

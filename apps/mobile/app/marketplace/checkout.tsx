@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, radius, spacing, typography } from '../../src/theme';
 import { useMarketplaceStore } from '../../src/features/marketplace/state/useMarketplaceStore';
 import { marketplaceApi } from '../../src/features/marketplace/api/marketplaceApi';
-import { createIdempotencyKey } from '../../src/features/marketplace/utils/idempotency';
 import { formatPaisa } from '../../src/features/marketplace/utils/formatMoney';
 import { useQuoteExpiry } from '../../src/features/marketplace/hooks/useQuoteExpiry';
 import { QuoteExpiredBanner } from '../../src/features/marketplace/components/QuoteExpiredBanner';
@@ -21,12 +20,16 @@ import { STRINGS } from '../../src/features/marketplace/constants/strings';
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ planId?: string; variantId?: string }>();
 
   const {
     activeProduct,
     selectedVariantId,
     activeQuote,
     selectedPlanId,
+    selectPlan,
+    getOrCreateIdempotencyKey,
+    setCheckoutSuccess,
     clearCheckout,
   } = useMarketplaceStore();
 
@@ -34,8 +37,17 @@ export default function CheckoutScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successIntentId, setSuccessIntentId] = useState<string | null>(null);
 
-  // One idempotency key per checkout session. Reused on retry so double-tap is idempotent!
-  const idempotencyKeyRef = useRef<string>(createIdempotencyKey());
+  // Dual-source plan resolution: route parameter has priority over store state
+  // to guarantee the user's selected EMI plan on Product Detail survives navigation
+  const effectivePlanId = params.planId || selectedPlanId;
+  const effectiveVariantId = params.variantId || selectedVariantId;
+
+  // Synchronize store if route parameter provided a more specific plan
+  useEffect(() => {
+    if (params.planId && params.planId !== selectedPlanId) {
+      selectPlan(params.planId);
+    }
+  }, [params.planId, selectedPlanId]);
 
   const isQuoteExpired = useQuoteExpiry(activeQuote?.expires_at);
 
@@ -61,6 +73,7 @@ export default function CheckoutScreen() {
             style={styles.primaryButton}
             onPress={() => {
               clearCheckout();
+              setSuccessIntentId(null);
               router.replace('/(tabs)/shop');
             }}
             activeOpacity={0.85}
@@ -73,7 +86,7 @@ export default function CheckoutScreen() {
   }
 
   // 2. Active session guard
-  if (!activeProduct || !activeQuote || !selectedPlanId) {
+  if (!activeProduct || !activeQuote || !effectivePlanId) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
@@ -83,6 +96,7 @@ export default function CheckoutScreen() {
             style={styles.primaryButton}
             onPress={() => {
               clearCheckout();
+              setSuccessIntentId(null);
               router.replace('/(tabs)/shop');
             }}
           >
@@ -93,8 +107,8 @@ export default function CheckoutScreen() {
     );
   }
 
-  const selectedPlan = activeQuote.plans.find((p) => p.plan_id === selectedPlanId);
-  const selectedVariant = activeProduct.variants.find((v) => v.id === selectedVariantId);
+  const selectedPlan = activeQuote.plans.find((p) => p.plan_id === effectivePlanId);
+  const selectedVariant = activeProduct.variants.find((v) => v.id === effectiveVariantId);
   const variantDescription = selectedVariant
     ? Object.values(selectedVariant.attributes).join(' · ')
     : '';
@@ -103,23 +117,26 @@ export default function CheckoutScreen() {
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    // Get fresh idempotency key for new transaction, or reuse key on network/UI retry
+    const idempotencyKey = getOrCreateIdempotencyKey(activeQuote.quote_id, effectivePlanId);
+
     try {
       const res = await marketplaceApi.createCheckoutIntent(
         {
           quote_id: activeQuote.quote_id,
-          plan_id: selectedPlanId,
+          plan_id: effectivePlanId,
         },
-        idempotencyKeyRef.current
+        idempotencyKey
       );
 
       setIsSubmitting(false);
       track('checkout_completed', {
         intent_id: res.intent_id,
         quote_id: activeQuote.quote_id,
-        plan_id: selectedPlanId,
+        plan_id: effectivePlanId,
       });
+      setCheckoutSuccess(res.intent_id);
       setSuccessIntentId(res.intent_id);
-      // NOTE: clearCheckout() is moved to the "Back to Marketplace" button handler
     } catch (err: any) {
       setIsSubmitting(false);
       const code = err?.error?.code;

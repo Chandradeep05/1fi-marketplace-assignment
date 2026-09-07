@@ -26,9 +26,13 @@ export const SegmentedToggle: React.FC<SegmentedToggleProps> = ({
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
           >
-            <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+            <Text
+              style={[styles.tabText, isActive && styles.activeTabText]}
+              numberOfLines={1}
+            >
               {tab}
             </Text>
+            {isActive && <View style={styles.indicator} />}
           </TouchableOpacity>
         );
       })}
@@ -39,31 +43,45 @@ export const SegmentedToggle: React.FC<SegmentedToggleProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceSecondary,
-    borderRadius: radius.pill,
-    padding: spacing.xs,
+    backgroundColor: '#F3F0FA',
+    borderRadius: 32,
+    padding: 4,
     marginHorizontal: spacing.md,
     marginVertical: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#E8E4F5',
   },
   tab: {
     flex: 1,
-    paddingVertical: spacing.sm,
+    paddingVertical: 9,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.pill,
+    borderRadius: 28,
   },
   activeTab: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#5B21B6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   tabText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 12,
     fontWeight: '600',
+    color: '#6B7280',
+    textAlign: 'center',
   },
   activeTabText: {
-    color: colors.textOnPrimary,
-    fontWeight: '700',
+    color: '#5B21B6',
+    fontWeight: '800',
+  },
+  indicator: {
+    width: 24,
+    height: 3,
+    backgroundColor: '#5B21B6',
+    borderRadius: 2,
+    marginTop: 3,
   },
 });

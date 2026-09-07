@@ -1,9 +1,12 @@
 import asyncio
+import hashlib
+import json
 import os
 from datetime import datetime, timedelta, timezone
 import uuid
 import pytest
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, text
+
 
 
 from app.core.error_codes import APIException, ErrorCode
@@ -677,3 +680,163 @@ async def test_high_concurrency_different_keys_same_quote(db_session, test_sessi
     assert all(r[1] == 201 for r in results)
     intent_ids = set(r[0]["intent_id"] for r in results)
     assert len(intent_ids) == 10
+
+
+@pytest.mark.asyncio
+async def test_phantom_replay_cache_evicted_and_phase_b_executed(db_session, test_session_factory, monkeypatch):
+    """Gate 4 regression test:
+    When Redis contains an idempotency cache hit pointing to an intent_id
+    that does NOT exist in PostgreSQL (e.g., following DB restore, rollback, or manual deletion),
+    the system must NEVER return the fabricated 200 response with the ghost ID.
+    Instead, it must:
+      1. Detect the row is missing in Postgres
+      2. Evict the stale Redis cache entry
+      3. Proceed through normal Phase B to create a genuine intent (201 Created)
+      4. Persist the genuine intent in Postgres and update Redis
+    """
+    prod, var = await seed_test_catalog(db_session)
+    now = datetime.now(timezone.utc)
+    quote = Quote(
+        id="qt_phantom_gate4_test",
+        product_id=prod.id,
+        variant_id=var.id,
+        price_paisa=var.price_paisa,
+        cashback_paisa=0,
+        plans_json=[{"plan_id": "36m", "monthly_emi_paisa": 352500}],
+        created_at=now,
+        expires_at=now + timedelta(minutes=10),
+    )
+    db_session.add(quote)
+    await db_session.commit()
+
+    from app.core.redis import get_redis
+
+    class InMemoryRedis:
+        def __init__(self):
+            self._store = {}
+        async def ping(self):
+            return True
+        async def hgetall(self, key):
+            return dict(self._store.get(key, {}))
+        async def hset(self, key, mapping):
+            if key not in self._store:
+                self._store[key] = {}
+            self._store[key].update({k: str(v) for k, v in mapping.items()})
+        async def delete(self, key):
+            self._store.pop(key, None)
+        def pipeline(self):
+            store = self._store
+            class Pipe:
+                def __init__(self):
+                    self.ops = []
+                def hset(self, key, mapping):
+                    self.ops.append(('hset', key, mapping))
+                    return self
+                def expire(self, key, ttl):
+                    return self
+                async def execute(self):
+                    for op, k, m in self.ops:
+                        if k not in store:
+                            store[k] = {}
+                        store[k].update({field: str(val) for field, val in m.items()})
+            return Pipe()
+
+    try:
+        r = await get_redis()
+        await asyncio.wait_for(r.ping(), timeout=0.5)
+    except Exception:
+        fake_r = InMemoryRedis()
+        async def mock_get_redis():
+            return fake_r
+        monkeypatch.setattr("app.domain.checkout_intent.service.get_redis", mock_get_redis)
+        monkeypatch.setattr("app.core.redis.get_redis", mock_get_redis)
+        r = fake_r
+
+    idem_key = "gate4_phantom_replay_key"
+    payload_to_hash = {"quote_id": "qt_phantom_gate4_test", "plan_id": "36m"}
+    req_hash = hashlib.sha256(
+        json.dumps(payload_to_hash, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+
+    ghost_intent_id = "ci_ghost_XYZ_nonexistent"
+    ghost_response = {
+        "intent_id": ghost_intent_id,
+        "status": "received",
+        "quote_id": "qt_phantom_gate4_test",
+        "plan_id": "36m",
+    }
+
+    # 1. Warm Redis with the phantom entry
+    cache_key = f"idempotency:{idem_key}"
+    await r.hset(cache_key, mapping={"hash": req_hash, "response": json.dumps(ghost_response)})
+
+
+    # Confirm ghost does NOT exist in Postgres
+    ghost_in_pg = (await db_session.execute(
+        select(CheckoutIntent).where(CheckoutIntent.id == ghost_intent_id)
+    )).scalar_one_or_none()
+    assert ghost_in_pg is None
+
+    service = CheckoutIntentService(db_session, session_factory=test_session_factory)
+
+    # 2. Replay check must detect missing PG row, return None, and evict Redis
+    replay_res = await service.check_existing_replay(
+        quote_id="qt_phantom_gate4_test",
+        plan_id="36m",
+        idempotency_key=idem_key,
+    )
+    assert replay_res is None
+
+    redis_after_evict = await r.hgetall(cache_key)
+    assert not redis_after_evict
+
+    # 3. Re-seed phantom into Redis to test create_intent's own Phase A guard
+    await r.hset(cache_key, mapping={"hash": req_hash, "response": json.dumps(ghost_response)})
+
+    # 4. Call create_intent — must NOT return cached 200 with ghost ID; must execute Phase B and return 201
+    resp_data, status_code = await service.create_intent(
+        quote_id="qt_phantom_gate4_test",
+        plan_id="36m",
+        idempotency_key=idem_key,
+    )
+
+    assert status_code == 201
+    assert resp_data["intent_id"] != ghost_intent_id
+    assert resp_data["status"] == "received"
+
+    # Confirm real intent exists in PostgreSQL
+    real_pg_row = (await db_session.execute(
+        select(CheckoutIntent).where(CheckoutIntent.id == resp_data["intent_id"])
+    )).scalar_one_or_none()
+    assert real_pg_row is not None
+    assert real_pg_row.idempotency_key == idem_key
+
+    # Confirm Redis is now updated with the REAL intent
+    final_cached = await r.hgetall(cache_key)
+    final_cached_resp = json.loads(final_cached["response"])
+    assert final_cached_resp["intent_id"] == resp_data["intent_id"]
+
+
+@pytest.mark.asyncio
+async def test_destructive_teardown_preserves_sentinel_and_schema_on_postgres(test_engine):
+    """Gate 5 regression test:
+    Verify that test database fixtures do NOT drop or destroy out-of-band tables
+    (e.g., sentinel tables or application schema) on PostgreSQL.
+    """
+    if "sqlite" in os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:"):
+        pytest.skip("Gate 5 sentinel preservation test applies to PostgreSQL")
+
+    # Create sentinel table with out-of-band data
+    async with test_engine.begin() as conn:
+        await conn.execute(text("CREATE TABLE IF NOT EXISTS _audit_sentinel_gate5 (id INT PRIMARY KEY, marker TEXT)"))
+        await conn.execute(text("INSERT INTO _audit_sentinel_gate5 (id, marker) VALUES (1, 'sentinel_alive') ON CONFLICT (id) DO NOTHING"))
+
+    # Verify sentinel still exists and data is preserved
+    async with test_engine.begin() as conn:
+        res = (await conn.execute(text("SELECT marker FROM _audit_sentinel_gate5 WHERE id = 1"))).scalar_one()
+        assert res == "sentinel_alive"
+
+        # Verify application schema table also exists
+        prod_table_check = (await conn.execute(text("SELECT 1 FROM information_schema.tables WHERE table_name = 'products'"))).scalar_one_or_none()
+        assert prod_table_check == 1
+

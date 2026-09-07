@@ -47,6 +47,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install Node Dependencies
+        run: npm install
+
       - name: Install Python Dependencies
         run: |
           pip install --upgrade pip
@@ -56,6 +59,10 @@ jobs:
         run: |
           npm --workspace=packages/contracts run typecheck
 
+      - name: Verify Mobile Typecheck
+        run: |
+          npm --workspace=apps/mobile run typecheck
+
       - name: Run Alembic Migrations
         working-directory: services/api
         env:
@@ -63,6 +70,14 @@ jobs:
           DATABASE_URL_SYNC: postgresql://marketplace:marketplace@localhost:5432/marketplace
         run: |
           alembic upgrade head
+
+      - name: Verify Seed Script (Idempotent)
+        working-directory: services/api
+        env:
+          DATABASE_URL: postgresql+asyncpg://marketplace:marketplace@localhost:5432/marketplace
+        run: |
+          python -m seed.seed
+          python -m seed.seed
 
       - name: Run Pytest Suite with PostgreSQL & Redis
         working-directory: services/api
@@ -72,3 +87,4 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
         run: |
           python -m pytest tests/ -v
+

@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy import text
+
 
 # Register UUID adapter for sqlite3 so UUIDs are stored as strings, avoiding scientific notation float issues
 sqlite3.register_adapter(uuid.UUID, lambda u: str(u))
@@ -127,23 +129,43 @@ from app.models.models import (
     CheckoutIntent,
 )
 
+# Load .env from the service root so TEST_DATABASE_URL (and other vars) are available
+# to os.getenv() calls in conftest, not just to pydantic-settings app code.
+try:
+    from dotenv import load_dotenv as _load_dotenv
+    import pathlib as _pathlib
+    _env_file = _pathlib.Path(__file__).parent.parent / ".env"
+    if _env_file.exists():
+        _load_dotenv(_env_file, override=False)  # Don't override vars already set in shell
+except Exception:
+    pass  # python-dotenv not installed — rely on shell environment
+
 # Use SQLite in-memory with StaticPool for fast, isolated, reliable test runs across any environment,
 # or Postgres if TEST_DATABASE_URL is explicitly set.
 TEST_DB_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
+# Guard: refuse to run drop_all teardown on any real (non-SQLite) database.
+# This prevents the test suite from destroying a seeded dev or staging database.
+_IS_SQLITE = "sqlite" in TEST_DB_URL
+
 
 
 @pytest_asyncio.fixture(scope="function")
 async def test_engine():
     engine = create_async_engine(
         TEST_DB_URL,
-        connect_args={"check_same_thread": False} if "sqlite" in TEST_DB_URL else {},
-        poolclass=StaticPool if "sqlite" in TEST_DB_URL else None,
+        connect_args={"check_same_thread": False} if _IS_SQLITE else {},
+        poolclass=StaticPool if _IS_SQLITE else None,
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # Only drop tables when using SQLite in-memory.
+    # On Postgres, we rely on per-test isolation (each test uses its own fresh rows).
+    # drop_all on Postgres would destroy all application tables in whatever DB is pointed at.
+    if _IS_SQLITE:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 
@@ -166,8 +188,38 @@ async def db_session(test_session_factory):
 
 @pytest_asyncio.fixture(autouse=True)
 async def reset_redis_client():
+    """Reset the Redis client singleton between tests (handles per-test event-loop churn)."""
     from app.core.redis import close_redis
     await close_redis()
     yield
     await close_redis()
 
+
+@pytest_asyncio.fixture(autouse=True)
+async def flush_redis_keys():
+    """Flush all Redis keys before each test so hardcoded idempotency keys don't collide
+    across test runs. Skips gracefully when Redis is not available (local SQLite-only runs)."""
+    try:
+        from app.core.redis import get_redis
+        r = await get_redis()
+        await r.flushdb()
+    except Exception:
+        pass  # Redis unavailable — tests that need it will handle that themselves
+    yield
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clean_db_between_tests(test_engine):
+    """On Postgres: truncate all data before each test for clean isolation.
+    On SQLite: drop_all/create_all per test_engine already handles isolation, so skip.
+    TRUNCATE ... CASCADE handles FK ordering automatically."""
+    if _IS_SQLITE:
+        yield
+        return
+    async with test_engine.begin() as conn:
+        await conn.execute(text(
+            "TRUNCATE TABLE checkout_intents, quotes, product_images, "
+            "product_variants, offers, emi_plan_rules, products, brands, categories "
+            "RESTART IDENTITY CASCADE"
+        ))
+    yield

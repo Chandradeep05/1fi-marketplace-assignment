@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
     await close_redis()
 
 
+
 app = FastAPI(
     title="1Fi Marketplace API",
     version="1.0.0",

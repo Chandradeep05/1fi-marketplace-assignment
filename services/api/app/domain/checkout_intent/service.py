@@ -34,7 +34,8 @@ class CheckoutIntentService:
             json.dumps(payload_to_hash, sort_keys=True).encode("utf-8")
         ).hexdigest()
 
-        # Redis fast path
+        # Redis fast path — MUST be verified against Postgres before trusting
+        redis_cached_response = None
         try:
             r = await get_redis()
             cached = await r.hgetall(f"idempotency:{idempotency_key}")
@@ -48,13 +49,13 @@ class CheckoutIntentService:
                         status_code=409,
                     )
                 if cached_resp_raw:
-                    return json.loads(cached_resp_raw)
+                    redis_cached_response = json.loads(cached_resp_raw)
         except APIException:
             raise
         except Exception as exc:
             logger.warning("Redis cache operation failed during replay check: %s", exc)
 
-        # Postgres fallback check
+        # Postgres is authoritative — always verify existence regardless of Redis state
         existing = await self.repo.get_by_idempotency_key(idempotency_key)
         if existing:
             if existing.request_hash != request_hash:
@@ -65,7 +66,20 @@ class CheckoutIntentService:
                 )
             return existing.response_json
 
+        # Redis had a cache entry but Postgres has no backing row — stale cache, evict it
+        if redis_cached_response is not None:
+            logger.warning(
+                "Stale Redis cache entry for idempotency_key=%s: intent not found in Postgres. Evicting.",
+                idempotency_key,
+            )
+            try:
+                r = await get_redis()
+                await r.delete(f"idempotency:{idempotency_key}")
+            except Exception as exc:
+                logger.warning("Failed to evict stale Redis cache entry: %s", exc)
+
         return None
+
 
     async def create_intent(
         self,
@@ -86,7 +100,8 @@ class CheckoutIntentService:
             json.dumps(payload_to_hash, sort_keys=True).encode("utf-8")
         ).hexdigest()
 
-        # Phase A: Fast-path lookup
+        # Phase A: Fast-path lookup — Redis hint only, Postgres is authoritative
+        redis_cached_response = None
         try:
             r = await get_redis()
             cached = await r.hgetall(f"idempotency:{idempotency_key}")
@@ -100,13 +115,13 @@ class CheckoutIntentService:
                         status_code=409,
                     )
                 if cached_resp_raw:
-                    return json.loads(cached_resp_raw), 200
+                    redis_cached_response = json.loads(cached_resp_raw)
         except APIException:
             raise
         except Exception as exc:
             logger.warning("Redis cache operation failed; continuing with database authority: %s", exc)
 
-        # Postgres check existing row before transaction
+        # Postgres is always authoritative — verify existence regardless of Redis state
         existing = await self.repo.get_by_idempotency_key(idempotency_key)
         if existing:
             if existing.request_hash != request_hash:
@@ -116,6 +131,18 @@ class CheckoutIntentService:
                     status_code=409,
                 )
             return existing.response_json, 200
+
+        # Redis had a cache entry but Postgres has no backing row — stale cache, evict it
+        if redis_cached_response is not None:
+            logger.warning(
+                "Stale Redis cache entry for idempotency_key=%s: intent not found in Postgres. Evicting.",
+                idempotency_key,
+            )
+            try:
+                r = await get_redis()
+                await r.delete(f"idempotency:{idempotency_key}")
+            except Exception as exc:
+                logger.warning("Failed to evict stale Redis cache entry: %s", exc)
 
         # Phase B: Atomic checkout transaction with blocking row locks
         intent_id = f"ci_{generate_ulid()}"

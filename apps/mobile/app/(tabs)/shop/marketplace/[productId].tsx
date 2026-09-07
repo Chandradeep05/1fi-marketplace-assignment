@@ -10,20 +10,21 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { colors, radius, spacing, typography } from '../../../../../src/theme';
-import { useProduct } from '../../../../../src/features/marketplace/hooks/useProduct';
-import { useMarketplaceStore } from '../../../../../src/features/marketplace/state/useMarketplaceStore';
-import { marketplaceApi } from '../../../../../src/features/marketplace/api/marketplaceApi';
-import { VariantSelector } from '../../../../../src/features/marketplace/components/VariantSelector';
-import { EmiPlanCard } from '../../../../../src/features/marketplace/components/EmiPlanCard';
-import { StickyCTA } from '../../../../../src/features/marketplace/components/StickyCTA';
-import { QuoteExpiredBanner } from '../../../../../src/features/marketplace/components/QuoteExpiredBanner';
-import { EmiPlanSkeleton } from '../../../../../src/features/marketplace/components/Skeleton';
-import { useQuoteExpiry } from '../../../../../src/features/marketplace/hooks/useQuoteExpiry';
-import { formatPaisa, formatSavings } from '../../../../../src/features/marketplace/utils/formatMoney';
-import { track } from '../../../../../src/features/marketplace/analytics/events';
-import { STRINGS } from '../../../../../src/features/marketplace/constants/strings';
-import { isMarketplaceEnabled } from '../../../../../src/features/marketplace/config/featureFlags';
+import { colors, radius, spacing, typography } from '../../../../src/theme';
+import { useProduct } from '../../../../src/features/marketplace/hooks/useProduct';
+import { useMarketplaceStore } from '../../../../src/features/marketplace/state/useMarketplaceStore';
+import { marketplaceApi } from '../../../../src/features/marketplace/api/marketplaceApi';
+import { VariantSelector } from '../../../../src/features/marketplace/components/VariantSelector';
+import { EmiPlanCard } from '../../../../src/features/marketplace/components/EmiPlanCard';
+import { StickyCTA } from '../../../../src/features/marketplace/components/StickyCTA';
+import { QuoteExpiredBanner } from '../../../../src/features/marketplace/components/QuoteExpiredBanner';
+import { EmiPlanSkeleton } from '../../../../src/features/marketplace/components/Skeleton';
+import { useQuoteExpiry } from '../../../../src/features/marketplace/hooks/useQuoteExpiry';
+import { formatPaisa, formatSavings } from '../../../../src/features/marketplace/utils/formatMoney';
+import { track } from '../../../../src/features/marketplace/analytics/events';
+import { STRINGS } from '../../../../src/features/marketplace/constants/strings';
+import { isMarketplaceEnabled } from '../../../../src/features/marketplace/config/featureFlags';
+
 
 export default function ProductDetailScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();

@@ -1,8 +1,10 @@
 import asyncio
+import os
 from datetime import datetime, timedelta, timezone
 import uuid
 import pytest
 from sqlalchemy import select, delete
+
 
 from app.core.error_codes import APIException, ErrorCode
 from app.domain.catalogue.repository import CatalogueRepository
@@ -594,7 +596,12 @@ async def test_non_idempotency_integrity_error_raises_500(db_session, test_sessi
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    "sqlite" in os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:"),
+    reason="FOR UPDATE row-level locking requires PostgreSQL; SQLite does not support it",
+)
 async def test_high_concurrency_same_key_produces_single_intent(db_session, test_session_factory):
+
     prod, var = await seed_test_catalog(db_session)
     now = datetime.now(timezone.utc)
     quote = Quote(
@@ -635,7 +642,12 @@ async def test_high_concurrency_same_key_produces_single_intent(db_session, test
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    "sqlite" in os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:"),
+    reason="FOR UPDATE row-level locking requires PostgreSQL; SQLite does not support it",
+)
 async def test_high_concurrency_different_keys_same_quote(db_session, test_session_factory):
+
     prod, var = await seed_test_catalog(db_session)
     now = datetime.now(timezone.utc)
     quote = Quote(

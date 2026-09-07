@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>1Fi Marketplace Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #7C3AED;
+    --primary-dark: #5B21B6;
+    --primary-light: #EDE9FE;
+    --bg: #F5F5F7;
+    --surface: #FFFFFF;
+    --text-p: #161422;
+    --text-s: #6B7280;
+    --bdr: #E8E7ED;
+    --success: #16A34A;
+    --gold: #F5B324;
+  }
+  ::-webkit-scrollbar { display: none; width: 0; height: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; -ms-overflow-style: none; scrollbar-width: none; }
+  body { background: var(--bg); display: flex; justify-content: center; align-items: flex-start; margin: 0; padding: 0; overflow: hidden; }
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .status-bar {
+    height: 44px;
+    background: var(--surface);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-p);
+  }
+  .island { width: 110px; height: 26px; background: #000; border-radius: 20px; }
+  .content { flex: 1; overflow-y: auto; padding-bottom: 90px; }
+  .header {
+    background: var(--surface);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--bdr);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .logo { width: 28px; height: 28px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14px; }
+  .header-title { font-size: 18px; font-weight: 800; color: var(--text-p); }
+  .back-btn { background: none; border: none; font-size: 15px; cursor: pointer; color: var(--primary); font-weight: 700; }
+  
+  /* Eligibility Strip */
+  .eligibility-strip {
+    background: var(--surface);
+    margin: 12px 16px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--bdr);
+  }
+  .pill {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .strip-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .strip-label { font-size: 12px; color: var(--text-s); font-weight: 500; }
+  .strip-amount { font-size: 20px; font-weight: 800; color: var(--success); }
+  .strip-sub { font-size: 11px; color: var(--text-s); margin-top: 4px; }
+  
+  /* Search & Chips */
+  .search-box { margin: 0 16px 12px; position: relative; }
+  .search-input {
+    width: 100%;
+    padding: 12px 16px 12px 38px;
+    border-radius: 12px;
+    border: 1px solid var(--bdr);
+    background: var(--surface);
+    font-size: 13px;
+  }
+  .search-icon { position: absolute; left: 12px; top: 12px; font-size: 14px; color: var(--text-s); }
+  .chips { display: flex; gap: 8px; padding: 0 16px 12px; overflow-x: auto; }
+  .chip {
+    padding: 7px 14px;
+    background: var(--surface);
+    border: 1px solid var(--bdr);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-s);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  
+  /* Products Grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+  .card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--bdr);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+  .card-img { width: 100%; height: 110px; object-fit: contain; margin-bottom: 8px; border-radius: 8px; background: #fafafa; }
+  .card-badge {
+    font-size: 9px;
+    font-weight: 700;
+    background: #FEF3C7;
+    color: #92400E;
+    padding: 2px 6px;
+    border-radius: 4px;
+    align-self: flex-start;
+    margin-bottom: 4px;
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text-p); margin-bottom: 4px; }
+  .card-price-row { display: flex; align-items: baseline; gap: 6px; margin-top: auto; }
+  .card-price { font-size: 14px; font-weight: 800; color: var(--text-p); }
+  .card-mrp { font-size: 11px; text-decoration: line-through; color: var(--text-s); }
+  .card-emi { font-size: 11px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+  
+  /* Detail Screen */
+  .detail-hero { background: var(--surface); padding: 16px; border-bottom: 1px solid var(--bdr); text-align: center; }
+  .detail-hero img { width: 160px; height: 160px; object-fit: contain; margin-bottom: 12px; }
+  .detail-title { font-size: 19px; font-weight: 800; color: var(--text-p); text-align: left; }
+  .detail-sub { font-size: 12px; color: var(--text-s); text-align: left; margin-top: 4px; }
+  .detail-pricing { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; text-align: left; }
+  .detail-price { font-size: 24px; font-weight: 800; color: var(--text-p); }
+  .detail-mrp { font-size: 14px; text-decoration: line-through; color: var(--text-s); }
+  .save-pill { background: #DCFCE7; color: #166534; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  
+  .sec-label { font-size: 13px; font-weight: 700; color: var(--text-p); margin: 16px 16px 8px; }
+  .variant-row { display: flex; gap: 8px; padding: 0 16px; }
+  .variant-chip {
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--bdr);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-p);
+    cursor: pointer;
+  }
+  .variant-chip.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+  
+  /* EMI Cards */
+  .emi-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  .emi-card {
+    background: var(--surface);
+    border: 1.5px solid var(--bdr);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+  }
+  .emi-card.selected { border-color: var(--primary); background: #FAF5FF; }
+  .emi-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .emi-tenure { font-size: 15px; font-weight: 800; color: var(--text-p); display: flex; align-items: center; gap: 8px; }
+  .radio-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+  .emi-card.selected .radio-dot { border-color: var(--primary); background: var(--primary); color: white; font-weight: 900; }
+  .emi-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .badge-rec { background: var(--gold); color: #78350F; }
+  .emi-amount { font-size: 19px; font-weight: 800; color: var(--text-p); margin-bottom: 4px; }
+  .emi-card.selected .emi-amount { color: var(--primary); }
+  .emi-footer { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-s); border-top: 1px solid var(--bdr); padding-top: 6px; margin-top: 6px; }
+  
+  .sticky-cta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--bdr);
+    padding: 12px 16px 28px;
+    z-index: 60;
+  }
+  .cta-btn {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .expiry-banner {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #991B1B;
+    margin: 12px 16px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  /* Checkout Screen */
+  .checkout-sec {
+    background: var(--surface);
+    margin: 12px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--bdr);
+    padding: 16px;
+  }
+  .checkout-title { font-size: 14px; font-weight: 800; color: var(--text-p); margin-bottom: 12px; }
+  .checkout-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-s); margin-bottom: 8px; }
+  .checkout-row.bold { color: var(--text-p); font-weight: 800; font-size: 15px; border-top: 1px dashed var(--bdr); padding-top: 10px; margin-top: 10px; }
+  .idempotency-badge {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    color: #166534;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  /* Success Screen */
+  .success-view { text-align: center; padding: 60px 24px; }
+  .success-icon {
+    width: 72px;
+    height: 72px;
+    background: #DCFCE7;
+    color: #16A34A;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 20px;
+    font-weight: 900;
+  }
+  .success-title { font-size: 22px; font-weight: 800; color: var(--text-p); margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--text-s); line-height: 1.5; margin-bottom: 24px; }
+  .intent-box {
+    background: var(--surface);
+    border: 1px solid var(--bdr);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .intent-label { font-size: 11px; color: var(--text-s); font-weight: 600; text-transform: uppercase; }
+  .intent-id { font-size: 14px; font-weight: 800; color: var(--primary); font-family: monospace; margin-top: 4px; }
+  
+  /* Tab Bar */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: var(--surface);
+    border-top: 1px solid var(--bdr);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 50;
+    padding-bottom: 10px;
+  }
+  .tab-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: var(--text-s); cursor: pointer; gap: 4px; }
+  .tab-item.active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="island"></div>
+    <span>100% ⚡</span>
+  </div>
+
+  <div class="content" id="app"></div>
+
+  <div class="tab-bar" id="tabBar">
+    <div class="tab-item"><span style="font-size:18px;">🏷️</span><span>Top Brands</span></div>
+    <div class="tab-item active"><span style="font-size:18px;">🛍️</span><span>1Fi Market</span></div>
+    <div class="tab-item"><span style="font-size:18px;">📍</span><span>Nearby Stores</span></div>
+  </div>
+</div>
+
+<script>
+let currentView = 'catalogue';
+let activeCat = 'all';
+let activePlan = '36m';
+let searchQuery = '';
+
+function render() {
+  const app = document.getElementById('app');
+  const tb = document.getElementById('tabBar');
+  
+  if (currentView === 'catalogue') {
+    tb.style.display = 'flex';
+    app.innerHTML = `
+      <div class="header">
+        <div class="header-left">
+          <div class="logo">1F</div>
+          <span class="header-title">1Fi Marketplace</span>
+        </div>
+        <span style="font-size:18px;">🔔</span>
+      </div>
+      <div class="eligibility-strip">
+        <div class="pill">⚡ Mutual Fund Credit Line</div>
+        <div class="strip-row">
+          <span class="strip-label">Available for Instant EMI:</span>
+          <span class="strip-amount">₹1,50,000</span>
+        </div>
+        <div class="strip-sub">Total pre-approved credit: ₹2,00,000 · Active limits used: ₹50,000</div>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" placeholder="Search electronics, phones, laptops..." value="${searchQuery}" oninput="searchQuery=this.value; render()">
+      </div>
+      <div class="chips">
+        <div class="chip ${activeCat==='all'?'active':''}" onclick="activeCat='all'; render()">All</div>
+        <div class="chip ${activeCat==='smartphones'?'active':''}" onclick="activeCat='smartphones'; render()">📱 Smartphones</div>
+        <div class="chip ${activeCat==='laptops'?'active':''}" onclick="activeCat='laptops'; render()">💻 Laptops</div>
+        <div class="chip ${activeCat==='audio'?'active':''}" onclick="activeCat='audio'; render()">🎧 Audio</div>
+      </div>
+      <div class="grid">
+        <div class="card" onclick="currentView='detail'; render()">
+          <span class="card-badge">0% No-Cost EMI</span>
+          <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg" class="card-img" alt="iPhone 17 Pro">
+          <div class="card-title">Apple iPhone 17 Pro</div>
+          <div class="card-price-row">
+            <span class="card-price">₹1,34,900</span>
+            <span class="card-mrp">₹1,39,900</span>
+          </div>
+          <div class="card-emi">from ₹3,747/mo</div>
+        </div>
+        <div class="card">
+          <span class="card-badge">Recommended</span>
+          <img src="https://images.samsung.com/is/image/samsung/p6pim/in/2401/gallery/in-galaxy-s24-s928-sm-s928bztqins-thumb-539573341" class="card-img" alt="Samsung S25">
+          <div class="card-title">Samsung Galaxy S25 Ultra</div>
+          <div class="card-price-row">
+            <span class="card-price">₹1,29,900</span>
+            <span class="card-mrp">₹1,34,900</span>
+          </div>
+          <div class="card-emi">from ₹3,608/mo</div>
+        </div>
+        <div class="card">
+          <span class="card-badge">0% EMI</span>
+          <img src="https://www.sony.co.in/image/5d02da5df552836db894cead8a68f5f3?fmt=pjpeg&wid=330" class="card-img" alt="Sony Headphones">
+          <div class="card-title">Sony WH-1000XM6</div>
+          <div class="card-price-row">
+            <span class="card-price">₹29,990</span>
+            <span class="card-mrp">₹34,990</span>
+          </div>
+          <div class="card-emi">from ₹833/mo</div>
+        </div>
+        <div class="card">
+          <span class="card-badge">0% No-Cost EMI</span>
+          <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/mbp14-spacegray-select-202310?wid=904&hei=840&fmt=jpeg" class="card-img" alt="MacBook">
+          <div class="card-title">MacBook Pro M4</div>
+          <div class="card-price-row">
+            <span class="card-price">₹1,69,900</span>
+            <span class="card-mrp">₹1,79,900</span>
+          </div>
+          <div class="card-emi">from ₹4,719/mo</div>
+        </div>
+      </div>
+    `;
+  } else if (currentView === 'detail') {
+    tb.style.display = 'none';
+    app.innerHTML = `
+      <div class="header">
+        <button class="back-btn" onclick="currentView='catalogue'; render()">← Back</button>
+        <span style="font-size:14px; font-weight:700;">Product Details</span>
+        <span style="font-size:18px;">❤️</span>
+      </div>
+      <div class="expiry-banner">
+        <span>⏱️ Dynamic Quote Active</span>
+        <span style="font-weight:800;">09:42 remaining</span>
+      </div>
+      <div class="detail-hero">
+        <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg" class="card-img" style="height:150px;">
+        <div class="detail-title">Apple iPhone 17 Pro</div>
+        <div class="detail-sub">A19 Pro Chip · Titanium Frame · Pro Camera System</div>
+        <div class="detail-pricing">
+          <span class="detail-price">₹1,34,900</span>
+          <span class="detail-mrp">₹1,39,900</span>
+          <span class="save-pill">Save ₹5,000 (3% off)</span>
+        </div>
+      </div>
+      <div class="sec-label">Select Storage</div>
+      <div class="variant-row">
+        <div class="variant-chip">128 GB</div>
+        <div class="variant-chip active">256 GB</div>
+        <div class="variant-chip">512 GB</div>
+        <div class="variant-chip">1 TB</div>
+      </div>
+      <div class="sec-label">Choose EMI Financing Plan</div>
+      <div class="emi-list">
+        <div class="emi-card ${activePlan==='36m'?'selected':''}" onclick="activePlan='36m'; render()">
+          <div class="emi-card-header">
+            <div class="emi-tenure">
+              <div class="radio-dot">${activePlan==='36m'?'✓':''}</div>
+              <span>36 Months</span>
+            </div>
+            <span class="emi-badge badge-rec">RECOMMENDED · 0% EMI</span>
+          </div>
+          <div class="emi-amount">₹3,747 / month</div>
+          <div class="emi-footer">
+            <span>No-Cost EMI · 0% Interest</span>
+            <span>Total: ₹1,34,900</span>
+          </div>
+        </div>
+        <div class="emi-card ${activePlan==='24m'?'selected':''}" onclick="activePlan='24m'; render()">
+          <div class="emi-card-header">
+            <div class="emi-tenure">
+              <div class="radio-dot">${activePlan==='24m'?'✓':''}</div>
+              <span>24 Months</span>
+            </div>
+            <span class="emi-badge" style="background:#EDE9FE; color:#5B21B6;">0% EMI</span>
+          </div>
+          <div class="emi-amount">₹5,620 / month</div>
+          <div class="emi-footer">
+            <span>No-Cost EMI · 0% Interest</span>
+            <span>Total: ₹1,34,900</span>
+          </div>
+        </div>
+        <div class="emi-card ${activePlan==='12m'?'selected':''}" onclick="activePlan='12m'; render()">
+          <div class="emi-card-header">
+            <div class="emi-tenure">
+              <div class="radio-dot">${activePlan==='12m'?'✓':''}</div>
+              <span>12 Months</span>
+            </div>
+            <span class="emi-badge" style="background:#EDE9FE; color:#5B21B6;">0% EMI</span>
+          </div>
+          <div class="emi-amount">₹11,241 / month</div>
+          <div class="emi-footer">
+            <span>No-Cost EMI · 0% Interest</span>
+            <span>Total: ₹1,34,900</span>
+          </div>
+        </div>
+      </div>
+      <div class="sticky-cta">
+        <button class="cta-btn" onclick="currentView='checkout'; render()">
+          Proceed with ${activePlan} EMI Plan →
+        </button>
+      </div>
+    `;
+  } else if (currentView === 'checkout') {
+    tb.style.display = 'none';
+    app.innerHTML = `
+      <div class="header">
+        <button class="back-btn" onclick="currentView='detail'; render()">← Back</button>
+        <span style="font-size:14px; font-weight:700;">Review & Checkout</span>
+        <span></span>
+      </div>
+      <div class="idempotency-badge">
+        <span>🔒</span>
+        <span>Protected by Idempotent Submission · No Double Charges</span>
+      </div>
+      <div class="checkout-sec">
+        <div class="checkout-title">Order Summary</div>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg" style="width:54px; height:54px; object-fit:contain;">
+          <div>
+            <div style="font-size:14px; font-weight:800;">Apple iPhone 17 Pro</div>
+            <div style="font-size:12px; color:var(--text-s);">256GB · Natural Titanium</div>
+            <div style="font-size:14px; font-weight:800; color:var(--primary); margin-top:2px;">₹1,34,900</div>
+          </div>
+        </div>
+      </div>
+      <div class="checkout-sec">
+        <div class="checkout-title">Financing Breakdown</div>
+        <div class="checkout-row"><span>Credit Line Provider</span><span style="font-weight:600;">1Fi Capital Partners</span></div>
+        <div class="checkout-row"><span>Product Price</span><span>₹1,34,900</span></div>
+        <div class="checkout-row"><span>Financing Cashback</span><span style="color:var(--success); font-weight:700;">- ₹0</span></div>
+        <div class="checkout-row"><span>Processing Fee</span><span style="color:var(--success); font-weight:700;">FREE (₹0)</span></div>
+        <div class="checkout-row"><span>Tenure</span><span style="font-weight:600;">${activePlan}</span></div>
+        <div class="checkout-row"><span>Interest Rate</span><span style="color:var(--success); font-weight:700;">0.0% (No-Cost EMI)</span></div>
+        <div class="checkout-row bold">
+          <span>Monthly Installment:</span>
+          <span style="color:var(--primary);">${activePlan==='36m'?'₹3,747':activePlan==='24m'?'₹5,620':'₹11,241'} / mo</span>
+        </div>
+      </div>
+      <div class="sticky-cta">
+        <button class="cta-btn" onclick="currentView='success'; render()">
+          Confirm & Create Checkout Intent →
+        </button>
+      </div>
+    `;
+  } else if (currentView === 'success') {
+    tb.style.display = 'none';
+    app.innerHTML = `
+      <div class="success-view">
+        <div class="success-icon">✓</div>
+        <div class="success-title">Your request has been noted!</div>
+        <div class="success-sub">Your mutual-fund backed credit line EMI reservation has been logged with PostgreSQL authority.</div>
+        <div class="intent-box">
+          <div class="intent-label">INTENT REFERENCE ULID</div>
+          <div class="intent-id">ci_01JKX94B8M2P4ZQ1Y5W3R7</div>
+          <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; color:var(--text-s);">
+            <span>Status: <b style="color:var(--success);">Received</b></span>
+            <span>Database: <b>PostgreSQL Verified</b></span>
+          </div>
+        </div>
+        <button class="cta-btn" onclick="currentView='catalogue'; render()" style="background:var(--primary-dark);">
+          Back to Marketplace
+        </button>
+      </div>
+    `;
+  } else if (currentView === 'fixture') {
+    tb.style.display = 'none';
+    app.innerHTML = `
+      <div class="header">
+        <button class="back-btn" onclick="currentView='catalogue'; render()">← Back</button>
+        <span style="font-size:14px; font-weight:700;">Product Not Found</span>
+        <span></span>
+      </div>
+      <div style="text-align:center; padding:60px 24px;">
+        <div style="font-size:48px; margin-bottom:16px;">🚫</div>
+        <div style="font-size:18px; font-weight:800; color:var(--text-p); margin-bottom:8px;">404: Test Fixture Excluded</div>
+        <div style="font-size:13px; color:var(--text-s); line-height:1.5; margin-bottom:24px;">
+          Product <code>test-cable-7m</code> has <code>is_test_fixture = true</code> and is strictly blocked from public listing, direct lookup, quotes, and checkout.
+        </div>
+        <button class="cta-btn" onclick="currentView='catalogue'; render()">
+          Return to Public Catalogue
+        </button>
+      </div>
+    `;
+  }
+}
+
+window.setView = function(v) { currentView = v; render(); };
+window.setCat = function(c) { activeCat = c; render(); };
+window.setPlan = function(p) { activePlan = p; render(); };
+window.setSearch = function(s) { searchQuery = s; render(); };
+
+render();
+</script>
+</body>
+</html>

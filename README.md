@@ -82,7 +82,7 @@ Press `w` to open in web browser, or scan the QR code with Expo Go on iOS / Andr
 
 ## 🧪 Verification & Testing
 
-The repository features comprehensive automated test coverage across unit math, API contracts, schema validation, and database concurrency flows (40 passing tests).
+The repository features comprehensive automated test coverage across unit math, API contracts, schema validation, and database concurrency flows (42 passing tests).
 
 ### 1. Unit Tests (No external services required)
 ```bash
@@ -131,6 +131,32 @@ Key architectural choices are preserved in [`docs/decisions.md`](docs/decisions.
 - **ADR-009:** Credit limit filtering on `total_payable_paisa` repayment obligation.
 - **ADR-010:** Deterministic commercial offer precedence (`product > category > global`).
 - **ADR-011:** Edge rate-limit fail-open availability strategy.
+
+---
+
+## 📱 Mobile App UI & User Flow
+
+The mobile client is built with React Native & Expo, matching 1Fi's exact design tokens (`#7C3AED` primary, `#EDE9FE` accent, `#F5F5F7` background) with full end-to-end user flows:
+
+| 1. Marketplace Catalogue | 2. Category Filter (Smartphones) |
+| :---: | :---: |
+| <img src="docs/screenshots/01_marketplace_home.png" width="360" alt="Marketplace Home" /> | <img src="docs/screenshots/02_category_filter_smartphones.png" width="360" alt="Category Filter" /> |
+| **Credit Line & Product Listing**<br/>Displays available Mutual Fund Credit Line (`₹1,50,000`) and products with pre-computed EMI badges. | **Dynamic Category Filtering**<br/>Instant category filtering for smartphones with responsive 0% EMI calculation chips. |
+
+| 3. Real-Time Search | 4. Product Details & Live Quote |
+| :---: | :---: |
+| <img src="docs/screenshots/03_search_query_iphone.png" width="360" alt="Search Query" /> | <img src="docs/screenshots/04_product_detail_iphone17.png" width="360" alt="Product Detail" /> |
+| **Instant Client Search**<br/>Real-time filtering on device without unnecessary network roundtrips. | **Variant Picker & Quote Countdown**<br/>Storage variants (128GB to 1TB) with active quote expiry countdown timer. |
+
+| 5. EMI Plan Selection | 6. Review & Checkout Intent |
+| :---: | :---: |
+| <img src="docs/screenshots/05_emi_plan_selection_36m.png" width="360" alt="EMI Plan Selection" /> | <img src="docs/screenshots/06_checkout_review_screen.png" width="360" alt="Checkout Review" /> |
+| **Deterministic EMI Options**<br/>36m recommended No-Cost EMI (`₹3,747/mo`), 24m, and 12m tenure options with sticky CTA. | **Financing Breakdown & Security**<br/>Transparent fee breakdown (0% interest, FREE processing) and idempotency guard. |
+
+| 7. Order Success & Intent Created | 8. Test Fixture 404 Guard |
+| :---: | :---: |
+| <img src="docs/screenshots/07_order_success_confirmation.png" width="360" alt="Order Success" /> | <img src="docs/screenshots/08_fixture_exclusion_404.png" width="360" alt="Fixture Exclusion 404" /> |
+| **PostgreSQL Authority Verified**<br/>Committed intent reference ULID (`ci_01JKX94B8M2P4ZQ1Y5W3R7`) logged to DB. | **Fixture Sealing Guard**<br/>Benchmark fixture `test-cable-7m` strictly intercepted and blocked with HTTP 404. |
 
 ---
 
